@@ -1,7 +1,7 @@
 {
   "name": "Wikilog's",
   "short_name": "Wikilog's",
-  "description": "Any journey, one book — travel journal for flights, trains, cars and campers.",
+  "description": "Any journey, one book \u2014 travel & holidays journal with community.",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f0ebe3",

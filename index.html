@@ -164,6 +164,38 @@ body{padding-bottom:72px}
 .hero-cover.slim .inner{padding:28px 20px 18px}
 .trip-places .meta{margin-top:2px}
 @media print{.top,.dock,.fab,.tabs,.mode-switch,.toast,.modal-bg,.no-print{display:none!important}body{background:#fff;padding:0}.shell{max-width:none}.panel{border:none;box-shadow:none}}
+
+/* Community / social */
+.demo-chip{display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:#f3e4d8;color:var(--warm);font-size:11px;font-weight:600;margin:8px 0}
+.badge-pub{background:var(--accent-soft);color:var(--accent)}
+.badge-priv{background:#eee;color:var(--muted)}
+.soc-tabs{display:flex;gap:4px;overflow-x:auto;padding:4px;background:var(--paper);border-radius:999px;border:1px solid var(--line);margin:12px 0;scrollbar-width:none}
+.soc-tabs button{flex:0 0 auto;border:none;background:transparent;padding:8px 12px;border-radius:999px;color:var(--muted);cursor:pointer;font-size:12px;font-weight:500}
+.soc-tabs button.on{background:var(--ink);color:#fff}
+.feed-card{background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin:10px 0}
+.feed-card .who{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--accent-soft);display:grid;place-items:center;font-size:18px;flex:0 0 36px}
+.avatar.lg{width:56px;height:56px;font-size:28px}
+.react-row{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.react-btn{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:4px 10px;font-size:12px;cursor:pointer}
+.react-btn.on{border-color:var(--accent);background:var(--accent-soft)}
+.star-row{display:flex;gap:4px}
+.star-row button{border:none;background:transparent;font-size:22px;cursor:pointer;opacity:.35}
+.star-row button.on{opacity:1}
+.dm-bubble{max-width:80%;padding:10px 14px;border-radius:16px;margin:6px 0;font-size:14px;line-height:1.4}
+.dm-bubble.me{background:var(--accent);color:var(--accent-fg);margin-left:auto;border-bottom-right-radius:4px}
+.dm-bubble.them{background:var(--bg);border:1px solid var(--line);margin-right:auto;border-bottom-left-radius:4px}
+.dm-thread{display:flex;flex-direction:column;min-height:40vh;padding-bottom:8px}
+.dm-compose{display:flex;gap:8px;position:sticky;bottom:0;background:var(--bg);padding:8px 0}
+.type-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0 12px}
+.type-grid button{border:1px solid var(--line);background:var(--paper);border-radius:14px;padding:12px 10px;cursor:pointer;text-align:left;font-size:13px}
+.type-grid button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.type-grid button strong{display:block;font-size:14px;margin-bottom:2px}
+.pub-view .highlight{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px}
+.comment{padding:10px 0;border-bottom:1px solid var(--line)}
+.profile-card{display:flex;gap:12px;align-items:flex-start}
+.dock button{font-size:9px;padding:8px 2px}
+
 </style>
 </head>
 <body>
@@ -191,26 +223,54 @@ body{padding-bottom:72px}
 </div>
 <div id="toast" class="toast hidden"></div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="community.js"></script>
 <script>
 (function(){
-const VER="v4.0.0-fluency";
+const VER="v4.1.0-social";
 const STORAGE="wikilogs_v3";
 const uid=p=>p+"_"+Math.random().toString(36).slice(2,9);
-const PROMPTS=["Best meal","Hardest moment","Something funny","Tip for next time","Road note","People we met"];
+const PROMPTS=["Best meal","Hardest moment","Something funny","Tip for next time","Transit note","People we met"];
 const TPL=[
-{id:"o",name:"Overland / camper",items:[{c:"Docs",n:"Passports & visas"},{c:"Docs",n:"Vehicle papers"},{c:"Camp",n:"Gas & stove"},{c:"Vehicle",n:"Spare + compressor"},{c:"Kitchen",n:"Cooler & water"},{c:"Personal",n:"First aid & sun"}]},
-{id:"f",name:"Flight travel",items:[{c:"Docs",n:"Passport / ID"},{c:"Docs",n:"Boarding passes"},{c:"Bag",n:"Chargers"},{c:"Bag",n:"Medicines"},{c:"Clothes",n:"Outfits + shoes"}]},
-{id:"r",name:"Family road trip",items:[{c:"Kids",n:"Snacks"},{c:"Kids",n:"Entertainment"},{c:"Safety",n:"First aid"},{c:"Docs",n:"Bookings"}]}
+{id:"flight",name:"Flight",items:[{c:"Docs",n:"Passport / ID"},{c:"Docs",n:"Boarding passes"},{c:"Bag",n:"Chargers & adapters"},{c:"Bag",n:"Medicines"},{c:"Clothes",n:"Outfits + shoes"},{c:"Comfort",n:"Headphones & scarf"}]},
+{id:"city",name:"City break",items:[{c:"Docs",n:"ID / bookings"},{c:"Day",n:"Transit cards"},{c:"Day",n:"Comfortable shoes"},{c:"Bag",n:"Power bank"},{c:"Plan",n:"Museum tickets"}]},
+{id:"beach",name:"Beach / holiday",items:[{c:"Beach",n:"Swimwear & towel"},{c:"Beach",n:"Sunscreen & hat"},{c:"Stay",n:"Light clothes"},{c:"Docs",n:"Bookings"},{c:"Kids",n:"Snacks & games"}]},
+{id:"road",name:"Road trip",items:[{c:"Vehicle",n:"Licence & insurance"},{c:"Vehicle",n:"Spare / kit"},{c:"Snacks",n:"Cooler bag"},{c:"Nav",n:"Offline maps"},{c:"Safety",n:"First aid"}]},
+{id:"camper",name:"Camper / overland",items:[{c:"Docs",n:"Passports & visas"},{c:"Docs",n:"Vehicle papers"},{c:"Camp",n:"Gas & stove"},{c:"Vehicle",n:"Spare + compressor"},{c:"Kitchen",n:"Cooler & water"},{c:"Personal",n:"First aid & sun"}]},
+{id:"adventure",name:"Adventure",items:[{c:"Gear",n:"Kit checked"},{c:"Safety",n:"First aid & whistle"},{c:"Docs",n:"Permits"},{c:"Nav",n:"Maps / GPS"},{c:"Power",n:"Spare batteries"}]},
+{id:"family",name:"Family",items:[{c:"Kids",n:"Snacks"},{c:"Kids",n:"Entertainment"},{c:"Safety",n:"First aid"},{c:"Docs",n:"Bookings"},{c:"Stay",n:"Night routine kit"}]},
+{id:"cruise",name:"Cruise",items:[{c:"Docs",n:"Passports & tickets"},{c:"Cabin",n:"Adapters"},{c:"Evening",n:"Smart casual"},{c:"Day",n:"Shore-day bag"},{c:"Health",n:"Motion tablets"}]}
 ];
-const PRE=[{n:"Passports valid 6+ months"},{n:"Travel insurance"},{n:"Visas checked"},{n:"Vehicle ready / hire"},{n:"Cash & cards"},{n:"Offline maps"},{n:"Emergency contacts"}];
-const POI=[{id:"camp",label:"Camp",icon:"⛺"},{id:"fuel",label:"Fuel",icon:"⛽"},{id:"water",label:"Water",icon:"💧"},{id:"border",label:"Border",icon:"🛂"},{id:"waterhole",label:"Waterhole",icon:"🐘"},{id:"workshop",label:"Workshop",icon:"🔧"},{id:"viewpoint",label:"Viewpoint",icon:"👁"}];
+const TRIP_TYPES=[
+{id:"flight",label:"Flight",icon:"✈️",pre:["Flights booked","Seat / bags checked","Airport transfer","Travel insurance","Offline boarding passes"]},
+{id:"city",label:"City break",icon:"🏙️",pre:["Hotel / stay booked","Transit plan","Must-see shortlist","Reservations","City offline map"]},
+{id:"beach",label:"Beach / holiday",icon:"🏖️",pre:["Stay booked","Transfers","Sun kit packed","Kids kit","Travel insurance"]},
+{id:"road",label:"Road trip",icon:"🚗",pre:["Vehicle ready / hire","Route + fuel plan","Overnight stays","Offline maps","Emergency contacts"]},
+{id:"camper",label:"Camper / overland",icon:"⛺",pre:["Passports valid 6+ months","Visas checked","Vehicle ready / hire","Cash & cards","Offline maps","Emergency contacts","Travel insurance"]},
+{id:"adventure",label:"Adventure",icon:"🏔️",pre:["Permits / guides","Gear checked","Insurance (activity)","Emergency plan","Offline maps"]},
+{id:"family",label:"Family",icon:"👨‍👩‍👧‍👦",pre:["Bookings confirmed","Kids docs","Snacks & entertainment","Flexible buffer days","Travel insurance"]},
+{id:"cruise",label:"Cruise",icon:"🚢",pre:["Cruise docs printed","Flights to port","Shore excursions","Cabin requests","Travel insurance"]}
+];
+const PRE=[{n:"Passports valid 6+ months"},{n:"Travel insurance"},{n:"Visas checked"},{n:"Bookings confirmed"},{n:"Cash & cards"},{n:"Offline maps"},{n:"Emergency contacts"}];
+const POI=[
+{id:"hotel",label:"Hotel / Stay",icon:"🏨"},{id:"restaurant",label:"Restaurant",icon:"🍽️"},{id:"attraction",label:"Attraction",icon:"🎟️"},
+{id:"beach",label:"Beach",icon:"🏖️"},{id:"airport",label:"Airport",icon:"✈️"},{id:"station",label:"Station",icon:"🚉"},
+{id:"camp",label:"Camp",icon:"⛺"},{id:"fuel",label:"Fuel",icon:"⛽"},{id:"water",label:"Water",icon:"💧"},
+{id:"border",label:"Border",icon:"🛂"},{id:"waterhole",label:"Waterhole",icon:"🐘"},{id:"workshop",label:"Workshop",icon:"🔧"},
+{id:"viewpoint",label:"Viewpoint",icon:"👁"}
+];
+const STAY_TYPES=[{id:"hotel",label:"Hotel"},{id:"airbnb",label:"Airbnb / apt"},{id:"camp",label:"Camp"},{id:"lodge",label:"Lodge"},{id:"other",label:"Other"}];
+function tripTypeMeta(id){return TRIP_TYPES.find(t=>t.id===id)||null;}
+function preForType(typeId){const t=tripTypeMeta(typeId);return (t?t.pre:PRE.map(x=>x.n)).map(n=>({id:uid("pt"),name:n,done:false}));}
+function packingForType(typeId){const L=TPL.find(t=>t.id===typeId)||TPL[0];return{name:L.name,items:L.items.map(i=>({id:uid("p"),cat:i.c,name:i.n,done:false}))};}
+function isCampish(poi){return poi==="camp"||poi==="hotel"||poi==="lodge";}
+function emptyStay(){return{name:"",type:"hotel",checkIn:"",checkOut:"",rating:0,review:"",amenities:""};}
 function poiMeta(id){return POI.find(p=>p.id===id)||null;}
 function poiLabel(id){const p=poiMeta(id);return p?p.icon+" "+p.label:"";}
 function emptyCamp(){return{water:"",power:"",ablution:"",surface:"",noise:"",price:"",wildlifeRisk:"",braai:""};}
-function blankDay(o){const now=new Date();return Object.assign({id:uid("day"),date:now.toISOString().slice(0,10),time:now.toTimeString().slice(0,5),title:"",place:"",notes:"",photos:[],voice:null,story:null,lat:null,lng:null,campName:"",km:"",fuelNote:"",wildlife:"",kind:"note",poiType:"",campsite:emptyCamp()},o||{});}
-function migrateEntry(d){if(!d||typeof d!=="object")return d;if(!Array.isArray(d.photos))d.photos=[];if(d.campName==null)d.campName="";if(d.km==null)d.km="";if(d.fuelNote==null)d.fuelNote="";if(d.wildlife==null)d.wildlife="";if(!d.kind){if(d.voice&&!d.notes&&!d.photos.length)d.kind="voice";else if(d.photos.length&&!d.notes&&!d.voice)d.kind="photo";else if(d.title==="Check-in"||d.kind==="checkin")d.kind="checkin";else d.kind="note";}if(d.poiType==null)d.poiType="";if(!d.campsite||typeof d.campsite!=="object")d.campsite=emptyCamp();else d.campsite=Object.assign(emptyCamp(),d.campsite);return d;}
-function migratePlace(d){if(!d||typeof d!=="object")return d;if(d.poiType==null)d.poiType="";if(!d.campsite||typeof d.campsite!=="object")d.campsite=emptyCamp();else d.campsite=Object.assign(emptyCamp(),d.campsite);return d;}
-function migrateTrip(t){t.days=(t.days||[]).map(migrateEntry);t.destinations=(t.destinations||[]).map(migratePlace);t.storyline=t.storyline||[];t.trail=t.trail||[];t.expenses=t.expenses||[];return t;}
+function blankDay(o){const now=new Date();return Object.assign({id:uid("day"),date:now.toISOString().slice(0,10),time:now.toTimeString().slice(0,5),title:"",place:"",notes:"",photos:[],voice:null,story:null,lat:null,lng:null,campName:"",km:"",fuelNote:"",wildlife:"",kind:"note",poiType:"",campsite:emptyCamp(),stay:null},o||{});}
+function migrateEntry(d){if(!d||typeof d!=="object")return d;if(!Array.isArray(d.photos))d.photos=[];if(d.campName==null)d.campName="";if(d.km==null)d.km="";if(d.fuelNote==null)d.fuelNote="";if(d.wildlife==null)d.wildlife="";if(!d.kind){if(d.voice&&!d.notes&&!d.photos.length)d.kind="voice";else if(d.photos.length&&!d.notes&&!d.voice)d.kind="photo";else if(d.title==="Check-in"||d.kind==="checkin")d.kind="checkin";else d.kind="note";}if(d.poiType==null)d.poiType="";if(!d.campsite||typeof d.campsite!=="object")d.campsite=emptyCamp();else d.campsite=Object.assign(emptyCamp(),d.campsite);if(d.stay==null)d.stay=null;return d;}
+function migratePlace(d){if(!d||typeof d!=="object")return d;if(d.poiType==null)d.poiType="";if(!d.campsite||typeof d.campsite!=="object")d.campsite=emptyCamp();else d.campsite=Object.assign(emptyCamp(),d.campsite);if(!d.stay||typeof d.stay!=="object"){d.stay=null;}else d.stay=Object.assign(emptyStay(),d.stay);return d;}
+function migrateTrip(t){t.days=(t.days||[]).map(migrateEntry);t.destinations=(t.destinations||[]).map(migratePlace);t.storyline=t.storyline||[];t.trail=t.trail||[];t.expenses=t.expenses||[];if(t.isPublic==null)t.isPublic=false;if(!t.tripType)t.tripType="road";if(!Array.isArray(t.stays))t.stays=[];t.stays=t.stays.map(s=>Object.assign(emptyStay(),{id:s.id||uid("stay")},s));return t;}
 function oneLiner(s,n){s=String(s||"").replace(/\s+/g," ").trim();if(!s)return"";const cut=s.split(/(?<=[.!?])\s/)[0]||s;return cut.length>(n||110)?cut.slice(0,n||110).trim()+"…":cut;}
 function daySpend(t,date){return(t.expenses||[]).filter(e=>e.date===date).reduce((s,e)=>s+Number(e.amount||0),0);}
 function campFieldsHTML(c,prefix){c=c||{};const sel=(id,opts,val)=>`<select id="${prefix}${id}">${opts.map(o=>`<option value="${esc(o)}" ${String(val||"")===o?"selected":""}>${o||"—"}</option>`).join("")}</select>`;return `<div class="camp-grid">
@@ -235,21 +295,32 @@ function findDayBucket(t,date){const days=(t.days||[]).filter(d=>d.date===date);
 function upsertPlace(t,p){t.destinations=t.destinations||[];const key=(p.name||"").trim().toLowerCase();let d=key?t.destinations.find(x=>(x.name||"").trim().toLowerCase()===key):null;if(!d&&p.lat!=null)d=t.destinations.find(x=>x.lat!=null&&Math.abs(x.lat-p.lat)<0.002&&Math.abs((x.lng||0)-(p.lng||0))<0.002);if(!d){d=migratePlace({id:uid("d"),name:p.name||"Stop",country:p.country||"",notes:p.notes||"",lat:p.lat??null,lng:p.lng??null,poiType:p.poiType||"",campsite:p.campsite||emptyCamp()});t.destinations.push(d);}else{if(p.poiType)d.poiType=p.poiType;if(p.campsite)d.campsite=Object.assign(emptyCamp(),d.campsite||{},p.campsite);if(p.lat!=null){d.lat=p.lat;d.lng=p.lng;}if(p.notes)d.notes=p.notes;}return d;}
 
 
-function sample(){return{id:uid("t"),name:"Namibia Kaokoland",startDate:"2026-09-01",endDate:"2026-09-18",summary:"Windhoek to Opuwo and Epupa Falls — gravel, Himba country, Kunene spray.",currency:"NAD",budget:25000,cover:null,bookLayout:"balanced",viewMode:"magazine",
-destinations:[{id:uid("d"),name:"Windhoek",country:"Namibia",notes:"",lat:-22.56,lng:17.08,poiType:"",campsite:emptyCamp()},{id:uid("d"),name:"Opuwo",country:"Namibia",notes:"Last reliable fuel north.",lat:-18.06,lng:13.84,poiType:"fuel",campsite:emptyCamp()},{id:uid("d"),name:"Epupa Falls",country:"Namibia",notes:"Kunene River.",lat:-17.0,lng:13.25,poiType:"camp",campsite:{water:"yes",power:"camp",ablution:"good",surface:"gravel",noise:"moderate",price:"320 NAD",wildlifeRisk:"medium",braai:"yes"}}],
+function sampleCamper(){const pack=packingForType("camper");return{id:uid("t"),name:"Namibia — Kaokoland chapter",startDate:"2026-09-01",endDate:"2026-09-18",summary:"A multi-modal holiday: Cape Town flight into Windhoek, then gravel north to Opuwo and Epupa Falls — Himba country, Kunene spray.",currency:"NAD",budget:25000,cover:null,bookLayout:"balanced",viewMode:"magazine",tripType:"camper",isPublic:false,
+destinations:[{id:uid("d"),name:"Windhoek",country:"Namibia",notes:"Arrival hub",lat:-22.56,lng:17.08,poiType:"airport",campsite:emptyCamp(),stay:null},{id:uid("d"),name:"Opuwo",country:"Namibia",notes:"Last reliable fuel north.",lat:-18.06,lng:13.84,poiType:"fuel",campsite:emptyCamp(),stay:null},{id:uid("d"),name:"Epupa Falls",country:"Namibia",notes:"Kunene River.",lat:-17.0,lng:13.25,poiType:"camp",campsite:{water:"yes",power:"camp",ablution:"good",surface:"gravel",noise:"moderate",price:"320 NAD",wildlifeRisk:"medium",braai:"yes"},stay:{name:"Omarunga",type:"camp",checkIn:"2026-09-08",checkOut:"2026-09-10",rating:5,review:"Falls soundtrack all night.",amenities:"braai, shade"}}],
 legs:[{id:uid("l"),mode:"flight",from:"Cape Town",to:"Windhoek",notes:""},{id:uid("l"),mode:"car",from:"Windhoek",to:"Opuwo",notes:"C43"}],
-packing:TPL[0].items.map(i=>({id:uid("p"),cat:i.c,name:i.n,done:false})),packingName:TPL[0].name,
-pretrip:PRE.map(x=>({id:uid("pt"),name:x.n,done:false})),
+packing:pack.items,packingName:pack.name,
+pretrip:preForType("camper"),
+stays:[{id:uid("stay"),name:"Omarunga",type:"camp",checkIn:"2026-09-08",checkOut:"2026-09-10",rating:5,review:"Falls soundtrack all night.",amenities:"braai, shade"}],
 days:[
   blankDay({date:"2026-09-02",time:"18:40",title:"Dust and diesel",place:"Outjo",campName:"Namib Wilde",km:380,fuelNote:"Full in Outjo",wildlife:"Kudu at dusk",notes:"Gravel started after the last tar. Camp quiet, braai smoke, first jackals.",kind:"note",poiType:"camp",campsite:{water:"yes",power:"none",ablution:"basic",surface:"sand",noise:"quiet",price:"180 NAD",wildlifeRisk:"low",braai:"yes"}}),
   blankDay({date:"2026-09-08",time:"16:10",title:"Kunene spray",place:"Epupa Falls",campName:"Omarunga",km:210,fuelNote:"",wildlife:"Crocodiles below the falls",notes:"Himba market in the morning, then the river. Sleep to the sound of the falls.",kind:"note",poiType:"camp",campsite:{water:"yes",power:"camp",ablution:"good",surface:"gravel",noise:"moderate",price:"320 NAD",wildlifeRisk:"medium",braai:"yes"}})
 ],expenses:[],bookings:[],docs:[],trail:[],storyline:[],createdAt:new Date().toISOString()};}
+function sampleCity(){const pack=packingForType("city");return{id:uid("t"),name:"Lisbon city break",startDate:"2026-10-03",endDate:"2026-10-06",summary:"Trams, miradouros, and long lunches in Alfama — a soft long weekend.",currency:"EUR",budget:1200,cover:null,bookLayout:"balanced",viewMode:"magazine",tripType:"city",isPublic:false,
+destinations:[{id:uid("d"),name:"Lisbon Airport",country:"Portugal",notes:"",lat:38.77,lng:-9.13,poiType:"airport",campsite:emptyCamp(),stay:null},{id:uid("d"),name:"Alfama",country:"Portugal",notes:"Stay base",lat:38.71,lng:-9.13,poiType:"hotel",campsite:emptyCamp(),stay:{name:"Casa do Castelo",type:"airbnb",checkIn:"2026-10-03",checkOut:"2026-10-06",rating:0,review:"",amenities:"wifi, kitchen"}},{id:uid("d"),name:"Belém",country:"Portugal",notes:"Pastéis & tower",lat:38.7,lng:-9.2,poiType:"attraction",campsite:emptyCamp(),stay:null}],
+legs:[{id:uid("l"),mode:"flight",from:"Home",to:"Lisbon",notes:""}],
+packing:pack.items,packingName:pack.name,pretrip:preForType("city"),
+stays:[{id:uid("stay"),name:"Casa do Castelo",type:"airbnb",checkIn:"2026-10-03",checkOut:"2026-10-06",rating:0,review:"",amenities:"wifi, kitchen"}],
+days:[blankDay({date:"2026-10-03",time:"16:20",title:"First miradouro",place:"Alfama",notes:"Dropped bags, climbed for the light. Tram bells and grilled sardines.",kind:"note",poiType:"attraction"})],
+expenses:[],bookings:[{id:uid("b"),type:"hotel",title:"Casa do Castelo",ref:"CDC-1042",date:"2026-10-03",notes:""}],docs:[],trail:[],storyline:[],createdAt:new Date().toISOString()};}
+function sample(){return sampleCamper();}
 
-let S={trips:[],lists:TPL.map(t=>({id:t.id,name:t.name,items:t.items.map(i=>({id:uid("i"),cat:i.c,name:i.n}))})),screen:"home",tripId:null,tab:"story",map:null,watching:false,watchId:null};
+let S={trips:[],lists:TPL.map(t=>({id:t.id,name:t.name,items:t.items.map(i=>({id:uid("i"),cat:i.c,name:i.n}))})),screen:"home",tripId:null,tab:"story",map:null,watching:false,watchId:null,
+  communityTab:"feed",socView:null,socTripId:null,socProfileId:null,dmThreadId:null,dmOtherId:null,_tripTypePick:"city"};
 
 function load(){try{let r=localStorage.getItem(STORAGE);if(!r)r=localStorage.getItem("waybook_v3");if(!r)r=localStorage.getItem("waybook_v2");if(r){const p=JSON.parse(r);S.trips=p.trips||[];if(p.lists?.length)S.lists=p.lists;}}catch(e){}
-if(!S.trips.length){S.trips=[sample()];}
-S.trips.forEach(migrateTrip);save();}
+if(!S.trips.length){S.trips=[sampleCamper(),sampleCity()];}
+S.trips.forEach(migrateTrip);save();
+try{if(window.WikilogsCommunity)WikilogsCommunity.init();}catch(e){}}
 function save(){localStorage.setItem(STORAGE,JSON.stringify({trips:S.trips,lists:S.lists,ver:VER}));}
 function T(){return S.trips.find(t=>t.id===S.tripId)||null;}
 function toast(m){const e=document.getElementById("toast");e.textContent=m;e.classList.remove("hidden");setTimeout(()=>e.classList.add("hidden"),2500);}
@@ -277,14 +348,22 @@ function allStoryClips(t){
 }
 function hav(a,b){const R=6371,r=x=>x*Math.PI/180;const dLat=r(b.lat-a.lat),dLng=r(b.lng-a.lng);const x=Math.sin(dLat/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
 
+function C(){return window.WikilogsCommunity?WikilogsCommunity.adapter():null;}
+function privacyBadge(t){return t&&t.isPublic?`<span class="badge badge-pub">Public</span>`:`<span class="badge badge-priv">Private</span>`;}
+function demoChip(){const demo=!window.WikilogsCommunity||WikilogsCommunity.isDemo();return demo?`<div class="demo-chip">Demo community — connect Supabase for live multi-user</div>`:"";}
+function starsHTML(n){n=+n||0;return"★".repeat(Math.max(0,Math.min(5,n)))+"☆".repeat(Math.max(0,5-Math.min(5,n)));}
+function whoLine(id){const a=C();const p=a&&a.profile(id);if(!p)return{avatar:"👤",name:"Traveler"};return{avatar:p.avatar||"👤",name:p.displayName||"Traveler"};}
+
 function render(){
   const app=document.getElementById("app"),dock=document.getElementById("dock");
   if(S.screen==="home"){app.innerHTML=home();dock.innerHTML=dockHTML("home");}
   else if(S.screen==="lists"){app.innerHTML=lists();dock.innerHTML=dockHTML("lists");}
+  else if(S.screen==="community"){app.innerHTML=communityView();dock.innerHTML=dockHTML("community");}
   else{const t=T();if(!t){S.screen="home";return render();}app.innerHTML=tripView(t);dock.innerHTML=dockHTML("trip");}
   bind();
 }
 function dockHTML(a){return`<button class="${a==="home"?"on":""}" data-go="home">Trips</button>
+<button class="${a==="community"?"on":""}" data-go="community">Community</button>
 <button class="${a==="lists"?"on":""}" data-go="lists">Pack</button>
 <button class="${a==="trip"?"on":""}" data-go="trip-or-home">${S.tripId?"Open":"Trip"}</button>`;}
 
@@ -292,9 +371,9 @@ function home(){
   return`<div class="top"><div class="logo">Wikilog's <span class="ver-chip">${VER}</span></div>
   <button class="btn btn-sm" id="btnNew">New trip</button></div>
   <div class="hero-cover"><div class="inner">
-  <div class="kicker">Travel journal</div>
+  <div class="kicker">Travel & holidays</div>
   <h1 class="display">Any journey,<br/>one book</h1>
-  <p class="lede">Editorial log for flights, roads and campers. Map the route, write the days, print the story.</p>
+  <p class="lede">Holidays, city breaks, flights, road trips, campers — map the route, write the days, share the story.</p>
   </div></div>
   <div class="section">
   <div class="row-between"><h2 class="section-title">Your trips</h2>
@@ -304,34 +383,210 @@ function home(){
   ${S.trips.map(t=>{
     const left=daysLeft(t.startDate);
     const chip=left!=null&&left>=0?`${left===0?"Today":left+" days"}`:"";
+    const tt=tripTypeMeta(t.tripType);
     return`<button class="trip-card" data-open="${t.id}">
       <div class="thumb">${t.cover?`<img src="${t.cover}" alt=""/>`:""}</div>
       <div class="body"><h3>${esc(t.name)}</h3>
-      <div class="meta">${esc([t.startDate,t.endDate].filter(Boolean).join(" → ")||"Dates open")}
-      ${chip?` · <span class="badge">${chip}</span>`:""}</div>
+      <div class="meta">${tt?esc(tt.icon+" "+tt.label)+" · ":""}${esc([t.startDate,t.endDate].filter(Boolean).join(" → ")||"Dates open")}
+      ${chip?` · <span class="badge">${chip}</span>`:""} · ${privacyBadge(t)}</div>
       <div class="meta">${esc((t.destinations||[]).map(d=>d.name).join(" · "))}</div>
-      </div></button>`;}).join("")||`<div class="empty"><div class="ill">✦</div>No trips yet</div>`}
+      </div></button>`;}).join("")||`<div class="empty"><div class="ill">✦</div>No trips yet — start a holiday, city break, or road trip</div>`}
   </div>`;
 }
 function lists(){
   return`<div class="top"><div class="logo">Packing</div><button class="icon-btn" data-go="home">←</button></div>
-  <div class="section"><p class="meta">Templates you load into a trip.</p>
+  <div class="section"><p class="meta">Templates for flights, city breaks, beach weeks, road trips, campers, and more.</p>
   ${S.lists.map(L=>`<div class="panel"><strong>${esc(L.name)}</strong>
   <ul class="list">${L.items.map(i=>`<li><span class="meta">${esc(i.cat)}</span> · ${esc(i.name)}</li>`).join("")}</ul></div>`).join("")}
   </div>`;
 }
+
+function communityView(){
+  const a=C();
+  if(!a){return`<div class="top"><div class="logo">Community</div></div><div class="empty">Community module missing</div>`;}
+  if(S.socView==="publicTrip")return publicTripView(S.socTripId);
+  if(S.socView==="profile")return profileView(S.socProfileId);
+  if(S.socView==="dm")return dmThreadView();
+  const tabs=[["feed","Feed"],["discover","Discover"],["reviews","Reviews"],["people","People"],["messages","Messages"],["me","Me"]];
+  return`<div class="top"><div class="logo">Community <span class="ver-chip">${VER}</span></div>
+  <button class="icon-btn" data-go="home">←</button></div>
+  ${demoChip()}
+  <div class="soc-tabs">${tabs.map(([id,l])=>`<button class="${S.communityTab===id?"on":""}" data-soc-tab="${id}">${l}</button>`).join("")}</div>
+  <div class="section">${communityTabBody(a)}</div>`;
+}
+function communityTabBody(a){
+  if(S.communityTab==="feed")return feedHTML(a);
+  if(S.communityTab==="discover")return discoverHTML(a);
+  if(S.communityTab==="reviews")return reviewsHTML(a);
+  if(S.communityTab==="people")return peopleHTML(a);
+  if(S.communityTab==="messages")return messagesHTML(a);
+  return meHTML(a);
+}
+function feedHTML(a){
+  const items=a.feed();
+  if(!items.length)return`<div class="empty"><div class="ill">✦</div>Follow travelers to fill your feed</div>`;
+  return items.map(f=>{
+    const w=whoLine(f.authorId);
+    const reacts=Object.entries(f.reactions||{}).filter(([,ids])=>ids.length).map(([e,ids])=>`<button class="react-btn ${ids.includes(a.me().id)?"on":""}" data-react-feed="${f.id}" data-emoji="${esc(e)}">${e} ${ids.length}</button>`).join("");
+    const open=f.tripId?`<button class="btn btn-ghost btn-sm" data-open-pub="${f.tripId}">Open trip</button>`:"";
+    return`<div class="feed-card"><div class="who"><div class="avatar">${w.avatar}</div><div><strong data-open-profile="${f.authorId}" style="cursor:pointer">${esc(w.name)}</strong><div class="meta">${esc((f.createdAt||"").slice(0,10))}</div></div></div>
+    <p>${esc(f.text)}</p>
+    <div class="react-row">${reacts}<button class="react-btn" data-react-feed="${f.id}" data-emoji="❤️">❤️</button><button class="react-btn" data-react-feed="${f.id}" data-emoji="👏">👏</button>${open}</div></div>`;
+  }).join("");
+}
+function discoverHTML(a){
+  const trips=a.publicTrips();
+  return`<p class="meta" style="margin-bottom:10px">Browse public trips — comment and react.</p>`+trips.map(t=>{
+    const w=whoLine(t.ownerId);
+    const tt=tripTypeMeta(t.tripType);
+    const rc=Object.values(t.reactions||{}).reduce((n,arr)=>n+arr.length,0);
+    const cc=a.commentsFor(t.id).length;
+    return`<button class="trip-card" data-open-pub="${t.id}"><div class="thumb"></div><div class="body">
+    <h3>${esc(t.title)}</h3>
+    <div class="meta">${w.avatar} ${esc(w.name)} · ${tt?esc(tt.icon+" "+tt.label):"Trip"} · ${esc([t.startDate,t.endDate].filter(Boolean).join(" → "))}</div>
+    <div class="meta">${esc(oneLiner(t.summary,120))}</div>
+    <div class="meta" style="margin-top:6px">${rc} reactions · ${cc} comments · <span class="badge badge-pub">Public</span></div>
+    </div></button>`;
+  }).join("")||`<div class="empty">No public trips yet</div>`;
+}
+function reviewsHTML(a){
+  const list=a.placeReviews();
+  const form=`<div class="panel"><strong>Add a place / stay review</strong>
+  <div class="field" style="margin-top:10px"><label>Place name</label><input id="rvName" placeholder="Hotel, camp, beach…"/></div>
+  <div class="row"><div class="field" style="flex:1"><label>Type</label><select id="rvType">${["hotel","airbnb","camp","lodge","restaurant","attraction","beach","other"].map(x=>`<option value="${x}">${x}</option>`).join("")}</select></div>
+  <div class="field" style="flex:1"><label>Rating</label><select id="rvRate">${[5,4,3,2,1].map(n=>`<option value="${n}">${n} ★</option>`).join("")}</select></div></div>
+  <div class="field"><label>Dates</label><input id="rvDates" placeholder="2026-07-05 → 2026-07-12"/></div>
+  <div class="field"><label>Amenities</label><input id="rvAm" placeholder="wifi, breakfast, shade…"/></div>
+  <div class="field"><label>Review</label><textarea id="rvText" placeholder="What should the next traveler know?"></textarea></div>
+  <button class="btn btn-sm" id="rvSave">Publish review</button>
+  <button class="btn btn-ghost btn-sm" id="rvFromStay">From a logged stay…</button></div>`;
+  const cards=list.map(r=>{
+    const w=whoLine(r.authorId);
+    return`<div class="feed-card"><div class="who"><div class="avatar">${w.avatar}</div><div><strong>${esc(r.placeName)}</strong> <span class="tag">${esc(r.stayType||r.placeType||"")}</span>
+    <div class="meta">${esc(w.name)} · ${esc(r.dates||"")} · ${starsHTML(r.rating)}</div></div></div>
+    <p>${esc(r.text)}</p>
+    ${(r.amenities||[]).length||r.amenities?`<div class="meta">${esc(Array.isArray(r.amenities)?r.amenities.join(" · "):r.amenities)}</div>`:""}
+    </div>`;
+  }).join("")||`<div class="empty">No reviews yet</div>`;
+  return form+cards;
+}
+function peopleHTML(a){
+  return a.travelers().map(p=>{
+    const following=a.isFollowing(p.id);
+    const isMe=p.id===a.me().id;
+    return`<div class="panel profile-card"><div class="avatar lg">${p.avatar||"👤"}</div>
+    <div style="flex:1"><strong style="cursor:pointer" data-open-profile="${p.id}">${esc(p.displayName)}</strong>
+    <div class="meta">${esc(p.homeBase||"")}</div>
+    <p class="meta" style="margin-top:6px">${esc(p.bio||"")}</p>
+    <div class="row" style="margin-top:8px">
+    ${isMe?`<span class="badge">You</span>`:`<button class="btn btn-sm ${following?"btn-ghost":""}" data-follow="${p.id}">${following?"Following":"Follow"}</button>
+    <button class="btn btn-ghost btn-sm" data-dm="${p.id}">Message</button>`}
+    </div></div></div>`;
+  }).join("");
+}
+function messagesHTML(a){
+  const threads=a.threads();
+  if(!threads.length)return`<div class="empty"><div class="ill">✉️</div>No messages yet — message someone from People</div>`;
+  return threads.map(th=>{
+    const w=whoLine(th.otherId);
+    return`<button class="trip-card" data-open-dm="${th.id}" data-dm-other="${th.otherId}" style="margin-bottom:10px">
+    <div class="body" style="display:flex;gap:12px;align-items:center"><div class="avatar">${w.avatar}</div>
+    <div style="flex:1;text-align:left"><strong>${esc(w.name)}</strong>
+    <div class="meta">${esc(oneLiner(th.lastText,80))}</div>
+    <div class="meta">${esc((th.lastAt||"").slice(0,16).replace("T"," "))}${th.unread?` · <span class="badge">${th.unread} new</span>`:""}</div></div></div></button>`;
+  }).join("");
+}
+function meHTML(a){
+  const me=a.me();
+  const cfg=window.WikilogsCommunity.getCfg()||{url:"",anonKey:""};
+  const following=a.followingIds();
+  return`<div class="panel profile-card"><div class="avatar lg">${me.avatar||"🌿"}</div>
+  <div style="flex:1"><strong>${esc(me.displayName)}</strong><div class="meta">${esc(me.homeBase||"")}</div>
+  <p class="meta" style="margin-top:6px">${esc(me.bio||"")}</p>
+  <div class="meta" style="margin-top:8px">Following ${following.length} · Followers ${a.followersIds().length}</div></div></div>
+  <div class="panel"><strong>Edit profile</strong>
+  <div class="field" style="margin-top:10px"><label>Display name</label><input id="meName" value="${esc(me.displayName||"")}"/></div>
+  <div class="field"><label>Home base</label><input id="meHome" value="${esc(me.homeBase||"")}"/></div>
+  <div class="field"><label>Bio</label><textarea id="meBio">${esc(me.bio||"")}</textarea></div>
+  <div class="field"><label>Avatar emoji</label><input id="meAv" value="${esc(me.avatar||"🌿")}"/></div>
+  <button class="btn btn-sm" id="meSave">Save profile</button></div>
+  <div class="panel"><strong>Supabase (optional)</strong>
+  <p class="meta" style="margin:8px 0">Leave blank to stay on the demo community. Set URL + anon key to attempt live sync.</p>
+  <div class="field"><label>Project URL</label><input id="sbUrl" value="${esc(cfg.url||"")}" placeholder="https://xxxx.supabase.co"/></div>
+  <div class="field"><label>Anon key</label><input id="sbKey" value="${esc(cfg.anonKey||"")}" placeholder="eyJ…"/></div>
+  <div class="row"><button class="btn btn-sm" id="sbSave">Save connection</button>
+  <button class="btn btn-ghost btn-sm" id="sbClear">Use demo</button>
+  <button class="btn btn-ghost btn-sm" id="sbReset">Reset demo data</button></div>
+  ${demoChip()}</div>`;
+}
+function publicTripView(id){
+  const a=C();const t=a&&a.publicTrip(id);
+  if(!t)return`<div class="top"><button class="icon-btn" id="socBack">←</button><div class="logo">Trip</div></div><div class="empty">Not found</div>`;
+  const w=whoLine(t.ownerId);const tt=tripTypeMeta(t.tripType);
+  const comments=a.commentsFor(t.id);
+  const reacts=Object.entries(t.reactions||{}).filter(([,ids])=>ids.length).map(([e,ids])=>`<button class="react-btn ${ids.includes(a.me().id)?"on":""}" data-react-trip="${t.id}" data-emoji="${esc(e)}">${e} ${ids.length}</button>`).join("");
+  return`<div class="top"><button class="icon-btn" id="socBack">←</button><div class="logo">Public trip</div>${privacyBadge({isPublic:true})}</div>
+  <div class="hero-cover slim"><div class="inner"><div class="kicker">${tt?esc(tt.icon+" "+tt.label):"Trip"} · ${esc(w.name)}</div>
+  <h1 class="display" style="font-size:1.8rem">${esc(t.title)}</h1>
+  <p class="lede">${esc(t.summary||"")}</p>
+  <div class="chip">${esc([t.startDate,t.endDate].filter(Boolean).join(" → "))}</div></div></div>
+  <div class="section pub-view">
+  <div class="panel"><strong>Places</strong><div class="meta" style="margin-top:6px">${esc((t.places||[]).join(" · ")||"—")}</div></div>
+  <div class="panel"><strong>Highlights</strong>${(t.highlights||[]).map(h=>`<div class="highlight">· ${esc(h)}</div>`).join("")||'<p class="meta">—</p>'}</div>
+  <div class="panel"><strong>Reactions</strong><div class="react-row" style="margin-top:8px">${reacts}
+  <button class="react-btn" data-react-trip="${t.id}" data-emoji="❤️">❤️</button>
+  <button class="react-btn" data-react-trip="${t.id}" data-emoji="🔥">🔥</button>
+  <button class="react-btn" data-react-trip="${t.id}" data-emoji="👏">👏</button></div></div>
+  <div class="panel"><strong>Feedback on this trip</strong>
+  <div id="commentList">${comments.map(c=>{const cw=whoLine(c.authorId);return`<div class="comment"><strong>${esc(cw.name)}</strong> <span class="meta">${esc((c.createdAt||"").slice(0,16).replace("T"," "))}</span><p>${esc(c.text)}</p></div>`;}).join("")||'<p class="meta">No comments yet — be the first.</p>'}</div>
+  <div class="field" style="margin-top:10px"><label>Comment</label><textarea id="cmtText" placeholder="Ask a question or leave a tip…"></textarea></div>
+  <button class="btn btn-sm" id="cmtSend">Post comment</button></div>
+  <div class="row" style="margin-top:12px"><button class="btn btn-ghost btn-sm" data-open-profile="${t.ownerId}">View ${esc(w.name)}</button>
+  <button class="btn btn-ghost btn-sm" data-dm="${t.ownerId}">Message</button></div>
+  </div>`;
+}
+function profileView(id){
+  const a=C();const p=a&&a.profile(id);
+  if(!p)return`<div class="top"><button class="icon-btn" id="socBack">←</button></div><div class="empty">Not found</div>`;
+  const following=a.isFollowing(p.id);const isMe=p.id===a.me().id;
+  const trips=a.publicTrips().filter(t=>t.ownerId===p.id);
+  return`<div class="top"><button class="icon-btn" id="socBack">←</button><div class="logo">Profile</div></div>
+  <div class="panel profile-card" style="margin-top:12px"><div class="avatar lg">${p.avatar||"👤"}</div>
+  <div style="flex:1"><strong>${esc(p.displayName)}</strong><div class="meta">${esc(p.homeBase||"")}</div>
+  <p style="margin-top:8px">${esc(p.bio||"")}</p>
+  <div class="meta" style="margin-top:8px">Following ${a.followingIds(p.id).length} · Followers ${a.followersIds(p.id).length}</div>
+  <div class="row" style="margin-top:10px">${isMe?`<span class="badge">You</span>`:`
+  <button class="btn btn-sm ${following?"btn-ghost":""}" data-follow="${p.id}">${following?"Following":"Follow"}</button>
+  <button class="btn btn-ghost btn-sm" data-dm="${p.id}">Message</button>`}</div></div></div>
+  <h2 class="section-title">Public trips</h2>
+  ${trips.map(t=>`<button class="trip-card" data-open-pub="${t.id}"><div class="body"><h3>${esc(t.title)}</h3><div class="meta">${esc(oneLiner(t.summary,100))}</div></div></button>`).join("")||'<div class="empty">No public trips</div>'}
+  <h2 class="section-title">Following</h2>
+  <div class="panel">${a.followingIds(p.id).map(fid=>{const f=whoLine(fid);return`<div class="row-between" style="padding:8px 0;border-bottom:1px solid var(--line)"><span>${f.avatar} <strong data-open-profile="${fid}" style="cursor:pointer">${esc(f.name)}</strong></span></div>`;}).join("")||'<p class="meta">Not following anyone yet</p>'}</div>`;
+}
+function dmThreadView(){
+  const a=C();if(!a||!S.dmThreadId)return`<div class="empty">No thread</div>`;
+  a.markThreadRead(S.dmThreadId);
+  const w=whoLine(S.dmOtherId);
+  const msgs=a.threadMessages(S.dmThreadId);
+  const me=a.me().id;
+  return`<div class="top"><button class="icon-btn" id="socBackDm">←</button><div class="logo">${esc(w.avatar+" "+w.name)}</div></div>
+  <div class="dm-thread">${msgs.map(m=>`<div class="dm-bubble ${m.fromId===me?"me":"them"}">${esc(m.text)}<div class="meta" style="opacity:.7;font-size:11px;margin-top:4px">${esc((m.createdAt||"").slice(0,16).replace("T"," "))}</div></div>`).join("")||'<p class="meta" style="text-align:center;margin:24px">Say hello</p>'}</div>
+  <div class="dm-compose"><input id="dmText" placeholder="Message…" style="flex:1"/><button class="btn btn-sm" id="dmSend">Send</button></div>`;
+}
+
 function tripView(t){
   const mode=t.viewMode||"magazine";
   const tabs=[["story","Story"],["map","Map"],["log","Journal"],["pack","Pack"],["spend","Spend"],["docs","Docs"],["book","Book"]];
   const cover=t.cover?`<img src="${t.cover}" alt=""/>`:"";
   const slim=S.tab==="log"||S.tab==="map";
+  const tt0=tripTypeMeta(t.tripType);
   const head=mode==="map"||slim?"":`<div class="hero-cover" style="min-height:200px">${cover}<div class="inner">
-  <div class="kicker">${esc([t.startDate,t.endDate].filter(Boolean).join(" · "))}</div>
+  <div class="kicker">${tt0?esc(tt0.icon+" "+tt0.label)+" · ":""}${esc([t.startDate,t.endDate].filter(Boolean).join(" · "))}</div>
   <h1 class="display">${esc(t.name)}</h1>
   <p class="lede">${esc(t.summary||"")}</p>
   </div></div>`;
   return`<div class="top no-print"><button class="icon-btn" data-go="home">←</button>
-  <div class="logo" style="font-size:1.1rem">${esc(t.name)} <span class="ver-chip">${VER}</span></div>
+  <div class="logo" style="font-size:1.1rem">${esc(t.name)} <span class="ver-chip">${VER}</span> ${privacyBadge(t)}</div>
   <button class="btn btn-sm btn-ghost" id="btnShare">Share</button></div>
   ${head}
   <div class="mode-switch no-print">
@@ -389,6 +644,7 @@ function tabStory(t){
   <div class="field" style="flex:1"><label>Budget</label><input type="number" id="ovBud" value="${esc(t.budget||"")}"/></div></div>
   <div class="field"><label>Story lede</label><textarea id="ovSum">${esc(t.summary)}</textarea></div>
   <div class="field"><label>Cover image</label><input type="file" id="ovCover" accept="image/*"/></div>
+  <div class="field"><label>Trip type</label><select id="ovType">${TRIP_TYPES.map(x=>`<option value="${x.id}" ${t.tripType===x.id?"selected":""}>${x.icon} ${x.label}</option>`).join("")}</select></div>
   <div class="field"><label>Book layout</label><select id="ovLayout">
   <option value="balanced" ${t.bookLayout==="balanced"?"selected":""}>Balanced</option>
   <option value="photo" ${t.bookLayout==="photo"?"selected":""}>Photo-heavy</option>
@@ -396,6 +652,22 @@ function tabStory(t){
   <option value="guide" ${t.bookLayout==="guide"?"selected":""}>Guide mode</option></select></div>
   <button class="btn" id="ovSave">Save story</button>
   </div>
+  <div class="panel">
+  <div class="row-between"><div><strong>Community</strong><div class="meta" style="margin-top:4px">Default private. Public trips appear in Discover with comments.</div></div>${privacyBadge(t)}</div>
+  <div class="row" style="margin-top:12px">
+  <button class="btn btn-sm ${t.isPublic?"":"btn-soft"}" id="btnMakePublic">${t.isPublic?"Update public page":"Make trip public"}</button>
+  ${t.isPublic?`<button class="btn btn-ghost btn-sm" id="btnMakePrivate">Make private</button>`:""}
+  </div>
+  </div>
+  <div class="panel"><div class="row-between"><h3 class="section-title" style="font-size:1.2rem;margin:0">Stays</h3>
+  <button class="btn btn-sm btn-soft" id="addStay">+ Stay</button></div>
+  <ul class="list">${(t.stays||[]).map(s=>`<li><div style="flex:1"><strong>${esc(s.name)}</strong> <span class="tag">${esc(s.type)}</span>
+  <div class="meta">${esc([s.checkIn,s.checkOut].filter(Boolean).join(" → "))} ${s.rating?`· ${starsHTML(s.rating)}`:""}</div>
+  ${s.review?`<div class="meta">${esc(oneLiner(s.review,100))}</div>`:""}
+  ${s.amenities?`<div class="meta">${esc(s.amenities)}</div>`:""}</div>
+  <button class="btn btn-ghost btn-sm" data-review-stay="${s.id}">Review</button>
+  <button class="btn btn-ghost btn-sm" data-del-stay="${s.id}">×</button></li>`).join("")||'<li class="meta">Hotels, Airbnbs, camps, lodges…</li>'}
+  </ul></div>
   <div class="panel"><h3 class="section-title" style="font-size:1.2rem">Pre-trip</h3>
   <ul class="list">${(t.pretrip||[]).map(p=>`<li><input class="check" type="checkbox" data-pt="${p.id}" ${p.done?"checked":""}/><div>${esc(p.name)}</div></li>`).join("")}</ul>
   <div class="row"><input id="ptNew" placeholder="Add item" style="flex:1"/><button class="btn btn-sm" id="ptAdd">Add</button></div>
@@ -1289,6 +1561,59 @@ function initMap(t){
 }
 
 
+
+function tripTypePickerHTML(selected){
+  selected=selected||S._tripTypePick||"city";
+  return`<div class="field"><label>Trip type</label><div class="type-grid" id="typePick">${TRIP_TYPES.map(t=>`<button type="button" class="${t.id===selected?"on":""}" data-type-pick="${t.id}"><strong>${t.icon} ${esc(t.label)}</strong><span class="meta">Packing + pre-trip template</span></button>`).join("")}</div></div>`;
+}
+function bindTypePick(root){
+  (root||document).querySelectorAll("[data-type-pick]").forEach(b=>b.onclick=ev=>{
+    ev.preventDefault();S._tripTypePick=b.dataset.typePick;
+    (root||document).querySelectorAll("[data-type-pick]").forEach(x=>x.classList.toggle("on",x.dataset.typePick===S._tripTypePick));
+  });
+}
+function buildNewTrip(opts){
+  opts=opts||{};
+  const typeId=opts.tripType||S._tripTypePick||"city";
+  const pack=opts.list?{name:opts.list.name,items:opts.list.items.map(i=>({id:uid("p"),cat:i.cat,name:i.name,done:false}))}:packingForType(typeId);
+  const nt={id:uid("t"),name:opts.name||"Untitled",startDate:opts.startDate||"",endDate:opts.endDate||"",
+    summary:"",currency:opts.currency||"USD",budget:0,cover:null,bookLayout:"balanced",viewMode:"magazine",
+    tripType:typeId,isPublic:false,destinations:[],legs:[],bookings:[],docs:[],trail:[],storyline:[],stays:[],
+    pretrip:preForType(typeId),packing:pack.items,packingName:pack.name,days:[],expenses:[],createdAt:new Date().toISOString()};
+  return migrateTrip(nt);
+}
+function publishLocalTrip(t){
+  const a=C();if(!a||!t)return;
+  const highlights=(t.days||[]).filter(d=>d.title||d.notes).slice(0,5).map(d=>d.title||oneLiner(d.notes,80));
+  const pt=a.publishTrip({
+    localTripId:t.id,title:t.name,tripType:t.tripType||"road",summary:t.summary||"",
+    startDate:t.startDate,endDate:t.endDate,
+    places:(t.destinations||[]).map(d=>d.name).filter(Boolean),
+    highlights
+  });
+  t.isPublic=true;t.publicId=pt.id;save();
+  return pt;
+}
+function stayEditor(existing){
+  const s=existing||emptyStay();
+  modal(existing?"Edit stay":"Add stay",`<div class="field"><label>Name</label><input id="stN" value="${esc(s.name||"")}" placeholder="Hotel / Airbnb / camp…"/></div>
+  <div class="field"><label>Type</label><select id="stT">${STAY_TYPES.map(x=>`<option value="${x.id}" ${s.type===x.id?"selected":""}>${x.label}</option>`).join("")}</select></div>
+  <div class="row"><div class="field" style="flex:1"><label>Check-in</label><input type="date" id="stIn" value="${esc(s.checkIn||"")}"/></div>
+  <div class="field" style="flex:1"><label>Check-out</label><input type="date" id="stOut" value="${esc(s.checkOut||"")}"/></div></div>
+  <div class="field"><label>Rating (1–5)</label><select id="stR"><option value="0">—</option>${[1,2,3,4,5].map(n=>`<option value="${n}" ${+s.rating===n?"selected":""}>${n}</option>`).join("")}</select></div>
+  <div class="field"><label>Amenities</label><input id="stAm" value="${esc(s.amenities||"")}"/></div>
+  <div class="field"><label>Review</label><textarea id="stRev">${esc(s.review||"")}</textarea></div>`,()=>{
+    const rec={name:document.getElementById("stN").value.trim()||"Stay",type:document.getElementById("stT").value,
+      checkIn:document.getElementById("stIn").value,checkOut:document.getElementById("stOut").value,
+      rating:+document.getElementById("stR").value||0,amenities:document.getElementById("stAm").value,review:document.getElementById("stRev").value};
+    patch(t=>{
+      t.stays=t.stays||[];
+      if(existing){const x=t.stays.find(y=>y.id===existing.id);if(x)Object.assign(x,rec);}
+      else t.stays.push(Object.assign({id:uid("stay")},rec));
+    });
+  });
+}
+
 function closeSheet(){const root=document.getElementById("modalRoot");if(root)root.innerHTML="";}
 function sheet(html){const root=document.getElementById("modalRoot");root.innerHTML=`<div class="modal-bg" id="sheetBg"><div class="sheet"><div class="sheet-handle"></div>${html}</div></div>`;document.getElementById("sheetBg").addEventListener("click",e=>{if(e.target.id==="sheetBg")closeSheet();});}
 
@@ -1303,14 +1628,14 @@ function ensureTrip(then){
   document.getElementById("qcCancel").onclick=closeSheet;
   document.getElementById("qcNewTrip").onclick=()=>{
     closeSheet();
-    modal("New trip",`<div class="field"><label>Name</label><input id="mN" placeholder="Kaokoland…"/></div>
+    S._tripTypePick="city";
+    modal("New trip",`${tripTypePickerHTML("city")}<div class="field"><label>Name</label><input id="mN" placeholder="Lisbon weekend, coast road…"/></div>
     <div class="row"><div class="field" style="flex:1"><label>Start</label><input type="date" id="mS"/></div>
     <div class="field" style="flex:1"><label>End</label><input type="date" id="mE"/></div></div>`,()=>{
-      const nt={id:uid("t"),name:document.getElementById("mN").value.trim()||"Untitled",startDate:document.getElementById("mS").value,endDate:document.getElementById("mE").value,
-        summary:"",currency:"NAD",budget:0,cover:null,bookLayout:"balanced",viewMode:"magazine",destinations:[],legs:[],bookings:[],docs:[],trail:[],storyline:[],
-        pretrip:PRE.map(x=>({id:uid("pt"),name:x.n,done:false})),packing:[],packingName:"Empty",days:[],expenses:[],createdAt:new Date().toISOString()};
-      migrateTrip(nt);S.trips.unshift(nt);save();S.tripId=nt.id;S.screen="trip";S.tab="log";render();toast("Trip ready");then();
+      const nt=buildNewTrip({name:document.getElementById("mN").value.trim()||"Untitled",startDate:document.getElementById("mS").value,endDate:document.getElementById("mE").value});
+      S.trips.unshift(nt);save();S.tripId=nt.id;S.screen="trip";S.tab="log";render();toast("Trip ready");then();
     });
+    setTimeout(()=>bindTypePick(document.getElementById("modalRoot")),30);
   };
 }
 
@@ -1441,19 +1766,22 @@ async function qcVoice(){
 }
 
 function qcCheckin(){
-  _poiPick="camp";
+  _poiPick="hotel";
   const today=new Date().toISOString().slice(0,10);
   sheet(`<h2>Check-in</h2>
     <p class="meta" id="ciGeo">Locating…</p>
-    <div class="field"><label>Place / camp</label><input id="ciName" placeholder="Omarunga, Epupa…"/></div>
-    <div class="field"><label>POI type</label>${poiChipsHTML("camp")}</div>
-    <div class="row"><div class="field" style="flex:1"><label>Price</label><input id="ciPrice" placeholder="NAD"/></div>
-    <div class="field" style="flex:1"><label>Note</label><input id="ciNote" placeholder="Quiet, good shade"/></div></div>
-    <p class="meta" style="margin:8px 0">Campsite</p>
-    ${campFieldsHTML(emptyCamp(),"ci_")}
+    <div class="field"><label>Place</label><input id="ciName" placeholder="Hotel, camp, beach, station…"/></div>
+    <div class="field"><label>Place type</label>${poiChipsHTML("hotel")}</div>
+    <div class="row"><div class="field" style="flex:1"><label>Price</label><input id="ciPrice" placeholder="amount"/></div>
+    <div class="field" style="flex:1"><label>Note</label><input id="ciNote" placeholder="Quiet room, good coffee…"/></div></div>
+    <div id="ciCampWrap"><p class="meta" style="margin:8px 0">Camp / stay details (shown for Camp & Stay types)</p>
+    ${campFieldsHTML(emptyCamp(),"ci_")}</div>
     <button class="btn btn-block" id="ciSave" style="margin-top:8px">Save check-in</button>
     <button class="btn btn-ghost btn-block" id="qcCancel" style="margin-top:8px">Cancel</button>`);
   bindPoiRow(document.getElementById("modalRoot"));
+  const syncCamp=()=>{const w=document.getElementById("ciCampWrap");if(w)w.style.display=isCampish(_poiPick)||_poiPick==="camp"||_poiPick==="hotel"?"":"none";};
+  syncCamp();
+  document.querySelectorAll("#modalRoot [data-poi]").forEach(b=>b.addEventListener("click",()=>setTimeout(syncCamp,0)));
   document.getElementById("qcCancel").onclick=closeSheet;
   let fix={lat:null,lng:null};
   geoFix().then(g=>{fix=g;const el=document.getElementById("ciGeo");if(el)el.textContent=g.lat!=null?`GPS ${g.lat.toFixed(4)}, ${g.lng.toFixed(4)}`:"No GPS — save anyway";});
@@ -1475,11 +1803,11 @@ function qcCheckin(){
 function qcNote(){
   _poiPick="";
   sheet(`<h2>Note</h2>
-    <div class="field"><label>One line</label><textarea id="nTxt" placeholder="Dust, diesel, first jackals…"></textarea></div>
-    <div class="row"><div class="field" style="flex:1"><label>Camp</label><input id="nCamp"/></div>
-    <div class="field" style="flex:1"><label>Km</label><input id="nKm" type="number" inputmode="decimal"/></div></div>
-    <div class="row"><div class="field" style="flex:1"><label>Fuel</label><input id="nFuel" placeholder="Full in Outjo"/></div>
-    <div class="field" style="flex:1"><label>Wildlife</label><input id="nWild"/></div></div>
+    <div class="field"><label>One line</label><textarea id="nTxt" placeholder="First miradouro, late train, soft landing…"></textarea></div>
+    <div class="row"><div class="field" style="flex:1"><label>Place / stay</label><input id="nCamp" placeholder="Hotel, camp, neighbourhood…"/></div>
+    <div class="field" style="flex:1"><label>Km / miles</label><input id="nKm" type="number" inputmode="decimal"/></div></div>
+    <div class="row"><div class="field" style="flex:1"><label>Transit / fuel</label><input id="nFuel" placeholder="Metro day pass / full tank"/></div>
+    <div class="field" style="flex:1"><label>Wildlife / sight</label><input id="nWild" placeholder="Optional"/></div></div>
     <button class="btn btn-block" id="nSave">Save note</button>
     <button class="btn btn-ghost btn-block" id="qcCancel" style="margin-top:8px">Cancel</button>`);
   document.getElementById("qcCancel").onclick=closeSheet;
@@ -1496,31 +1824,54 @@ function qcNote(){
 }
 
 function placeEditor(existing){
-  const d=existing||{name:"",country:"",notes:"",lat:"",lng:"",poiType:"",campsite:emptyCamp()};
+  const d=existing||{name:"",country:"",notes:"",lat:"",lng:"",poiType:"",campsite:emptyCamp(),stay:null};
+  const st=d.stay||emptyStay();
   _poiPick=d.poiType||"";
   modal(existing?"Edit place":"Place",`<div class="field"><label>Name</label><input id="dN" value="${esc(d.name||"")}"/></div>
   <div class="field"><label>Country</label><input id="dC" value="${esc(d.country||"")}"/></div>
-  <div class="field"><label>POI type</label>${poiChipsHTML(_poiPick)}</div>
+  <div class="field"><label>Place type</label>${poiChipsHTML(_poiPick)}</div>
   <div class="row"><div class="field" style="flex:1"><label>Lat</label><input id="dLa" type="number" step="any" value="${d.lat??""}"/></div>
   <div class="field" style="flex:1"><label>Lng</label><input id="dLn" type="number" step="any" value="${d.lng??""}"/></div></div>
   <div class="field"><label>Notes</label><textarea id="dNo">${esc(d.notes||"")}</textarea></div>
-  <p class="meta" style="margin:4px 0 8px">Campsite (optional)</p>
-  ${campFieldsHTML(d.campsite||emptyCamp(),"pl_")}`,()=>{
+  <p class="meta" style="margin:8px 0 6px">Stay (optional)</p>
+  <div class="row"><div class="field" style="flex:1"><label>Stay type</label><select id="dStayType">${STAY_TYPES.map(x=>`<option value="${x.id}" ${st.type===x.id?"selected":""}>${x.label}</option>`).join("")}</select></div>
+  <div class="field" style="flex:1"><label>Stay name</label><input id="dStayName" value="${esc(st.name||"")}"/></div></div>
+  <div class="row"><div class="field" style="flex:1"><label>Check-in</label><input type="date" id="dStayIn" value="${esc(st.checkIn||"")}"/></div>
+  <div class="field" style="flex:1"><label>Check-out</label><input type="date" id="dStayOut" value="${esc(st.checkOut||"")}"/></div></div>
+  <div class="field"><label>Amenities</label><input id="dStayAm" value="${esc(st.amenities||"")}" placeholder="wifi, breakfast, pool…"/></div>
+  <div id="plCampWrap"><p class="meta" style="margin:4px 0 8px">Campsite fields (when place type is Camp)</p>
+  ${campFieldsHTML(d.campsite||emptyCamp(),"pl_")}</div>`,()=>{
+    const stayName=document.getElementById("dStayName").value.trim();
+    const stay=stayName||document.getElementById("dStayIn").value?{
+      name:stayName||document.getElementById("dN").value,type:document.getElementById("dStayType").value,
+      checkIn:document.getElementById("dStayIn").value,checkOut:document.getElementById("dStayOut").value,
+      rating:st.rating||0,review:st.review||"",amenities:document.getElementById("dStayAm").value
+    }:null;
     const rec={name:document.getElementById("dN").value||"Stop",country:document.getElementById("dC").value,notes:document.getElementById("dNo").value,
       lat:document.getElementById("dLa").value===""?null:+document.getElementById("dLa").value,lng:document.getElementById("dLn").value===""?null:+document.getElementById("dLn").value,
-      poiType:_poiPick,campsite:readCamp("pl_")};
+      poiType:_poiPick,campsite:readCamp("pl_"),stay};
     patch(t=>{
       if(existing){const x=t.destinations.find(p=>p.id===existing.id);if(x)Object.assign(x,rec);}
       else t.destinations.push(migratePlace(Object.assign({id:uid("d")},rec)));
+      if(stay){t.stays=t.stays||[];const key=(stay.name||"").toLowerCase();let s=t.stays.find(x=>(x.name||"").toLowerCase()===key);if(s)Object.assign(s,stay);else t.stays.push(Object.assign({id:uid("stay")},stay));}
     });
   });
-  setTimeout(()=>bindPoiRow(document.getElementById("modalRoot")),40);
+  setTimeout(()=>{
+    bindPoiRow(document.getElementById("modalRoot"));
+    const sync=()=>{const w=document.getElementById("plCampWrap");if(w)w.style.display=_poiPick==="camp"?"":"none";};
+    sync();
+    document.querySelectorAll("#modalRoot [data-poi]").forEach(b=>b.addEventListener("click",()=>setTimeout(sync,0)));
+  },40);
 }
 
 function bind(){
   document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{
     if(b.dataset.go==="trip-or-home"){if(S.tripId){S.screen="trip";}else S.screen="home";}
-    else{S.screen=b.dataset.go;if(b.dataset.go!=="trip")S.tripId=null;}
+    else{
+      S.screen=b.dataset.go;
+      if(b.dataset.go==="community"){S.socView=null;S.socTripId=null;S.socProfileId=null;S.dmThreadId=null;}
+      if(b.dataset.go!=="trip"&&b.dataset.go!=="community")S.tripId=null;
+    }
     if(S.map){try{S.map.remove();}catch(e){}S.map=null;}render();
   });
   document.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{S.tripId=b.dataset.open;S.screen="trip";S.tab=(T()?.viewMode==="map")?"map":"story";render();});
@@ -1528,16 +1879,18 @@ function bind(){
   document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>patch(t=>{t.viewMode=b.dataset.mode;S.tab=b.dataset.mode==="map"?"map":"story";}));
   document.getElementById("fab").onclick=()=>openQuickCapture();
 
-  document.getElementById("btnNew")?.addEventListener("click",()=>modal("New trip",`<div class="field"><label>Name</label><input id="mN"/></div>
+  document.getElementById("btnNew")?.addEventListener("click",()=>{
+    S._tripTypePick="city";
+    modal("New trip",`${tripTypePickerHTML("city")}<div class="field"><label>Name</label><input id="mN" placeholder="Any holiday or journey…"/></div>
   <div class="row"><div class="field" style="flex:1"><label>Start</label><input type="date" id="mS"/></div>
   <div class="field" style="flex:1"><label>End</label><input type="date" id="mE"/></div></div>
-  <div class="field"><label>Packing</label><select id="mP"><option value="">Empty</option>${S.lists.map(L=>`<option value="${L.id}">${esc(L.name)}</option>`).join("")}</select></div>`,()=>{
+  <div class="field"><label>Packing override</label><select id="mP"><option value="">Use trip-type template</option>${S.lists.map(L=>`<option value="${L.id}">${esc(L.name)}</option>`).join("")}</select></div>`,()=>{
     const list=S.lists.find(L=>L.id===document.getElementById("mP").value);
-    const nt={id:uid("t"),name:document.getElementById("mN").value.trim()||"Untitled",startDate:document.getElementById("mS").value,endDate:document.getElementById("mE").value,
-      summary:"",currency:"USD",budget:0,cover:null,bookLayout:"balanced",viewMode:"magazine",destinations:[],legs:[],bookings:[],docs:[],trail:[],storyline:[],
-      pretrip:PRE.map(x=>({id:uid("pt"),name:x.n,done:false})),packing:list?list.items.map(i=>({id:uid("p"),cat:i.cat,name:i.name,done:false})):[],packingName:list?list.name:"Empty",days:[],expenses:[],createdAt:new Date().toISOString()};
+    const nt=buildNewTrip({name:document.getElementById("mN").value.trim()||"Untitled",startDate:document.getElementById("mS").value,endDate:document.getElementById("mE").value,list:list||null});
     S.trips.unshift(nt);save();S.tripId=nt.id;S.screen="trip";S.tab="story";render();toast("Created");
-  }));
+  });
+    setTimeout(()=>bindTypePick(document.getElementById("modalRoot")),30);
+  });
   document.getElementById("btnExport")?.addEventListener("click",()=>{
     const blob=new Blob([JSON.stringify({trips:S.trips,lists:S.lists,ver:VER},null,2)],{type:"application/json"});
     const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`wikilogs-${VER}.json`;a.click();
@@ -1548,9 +1901,36 @@ function bind(){
 
   document.getElementById("ovSave")?.addEventListener("click",async()=>{
     const f=document.getElementById("ovCover")?.files?.[0];let cover=T().cover;if(f)cover=await fileURL(f);
+    const prevType=T()?.tripType;
     patch(t=>{t.name=document.getElementById("ovName").value.trim()||t.name;t.startDate=document.getElementById("ovStart").value;t.endDate=document.getElementById("ovEnd").value;
-      t.currency=document.getElementById("ovCur").value;t.budget=+document.getElementById("ovBud").value||0;t.summary=document.getElementById("ovSum").value;t.cover=cover;t.bookLayout=document.getElementById("ovLayout").value;});
+      t.currency=document.getElementById("ovCur").value;t.budget=+document.getElementById("ovBud").value||0;t.summary=document.getElementById("ovSum").value;t.cover=cover;t.bookLayout=document.getElementById("ovLayout").value;
+      const nt=document.getElementById("ovType")?.value;if(nt){t.tripType=nt;if(nt!==prevType&&confirm("Load packing + pre-trip template for this trip type?")){const pack=packingForType(nt);t.packing=pack.items;t.packingName=pack.name;t.pretrip=preForType(nt);}}
+      if(t.isPublic)publishLocalTrip(t);
+    });
     toast("Saved");
+  });
+  document.getElementById("btnMakePublic")?.addEventListener("click",()=>{
+    const t=T();if(!t)return;
+    if(!(t.summary||"").trim()&&!confirm("Publish without a story lede?"))return;
+    publishLocalTrip(t);render();toast("Trip is public in Community → Discover");
+  });
+  document.getElementById("btnMakePrivate")?.addEventListener("click",()=>{
+    const t=T();if(!t)return;const a=C();
+    if(a&&t.id)a.unpublishTrip(t.id);
+    patch(tr=>{tr.isPublic=false;tr.publicId=null;});
+    toast("Trip is private");
+  });
+  document.getElementById("addStay")?.addEventListener("click",()=>stayEditor(null));
+  document.querySelectorAll("[data-del-stay]").forEach(b=>b.onclick=()=>patch(t=>t.stays=(t.stays||[]).filter(s=>s.id!==b.dataset.delStay)));
+  document.querySelectorAll("[data-review-stay]").forEach(b=>b.onclick=()=>{
+    const t=T();const s=(t.stays||[]).find(x=>x.id===b.dataset.reviewStay);if(!s)return;
+    const a=C();if(!a)return;
+    a.addReview({placeName:s.name,placeType:s.type==="camp"?"camp":"hotel",stayType:s.type,rating:s.rating||5,
+      text:s.review||("Stay at "+s.name),amenities:(s.amenities||"").split(",").map(x=>x.trim()).filter(Boolean),
+      dates:[s.checkIn,s.checkOut].filter(Boolean).join(" → ")});
+    if(!s.review){s.review="Shared to Community reviews";save();}
+    toast("Review published to Community");
+    S.screen="community";S.communityTab="reviews";S.socView=null;render();
   });
   document.querySelectorAll("[data-pt]").forEach(c=>c.onchange=()=>patch(t=>{const p=t.pretrip.find(x=>x.id===c.dataset.pt);if(p)p.done=c.checked;}));
   document.getElementById("ptAdd")?.addEventListener("click",()=>{const n=document.getElementById("ptNew").value.trim();if(n)patch(t=>{t.pretrip.push({id:uid("pt"),name:n,done:false});});});
@@ -1588,14 +1968,14 @@ function bind(){
     modal("Journal",`<div class="row"><div class="field" style="flex:1"><label>Date</label><input type="date" id="jD" value="${new Date().toISOString().slice(0,10)}"/></div>
   <div class="field" style="flex:1"><label>Time</label><input type="time" id="jT" value="${new Date().toTimeString().slice(0,5)}"/></div></div>
   <div class="field"><label>Headline</label><input id="jH" value="${esc(pre||"")}"/></div>
-  <div class="field"><label>Place / camp</label><input id="jP"/></div>
+  <div class="field"><label>Place</label><input id="jP" placeholder="Neighbourhood, hotel, camp…"/></div>
   <div class="field"><label>POI type</label>${poiChipsHTML("")}</div>
-  <div class="row"><div class="field" style="flex:1"><label>Camp name</label><input id="jCamp"/></div>
+  <div class="row"><div class="field" style="flex:1"><label>Stay / camp name</label><input id="jCamp"/></div>
   <div class="field" style="flex:1"><label>Km</label><input id="jKm" type="number" inputmode="decimal"/></div></div>
   <div class="row"><div class="field" style="flex:1"><label>Fuel</label><input id="jFuel"/></div>
   <div class="field" style="flex:1"><label>Wildlife</label><input id="jWild"/></div></div>
   <div class="field"><label>Notes</label><textarea id="jN"></textarea></div>
-  <p class="meta" style="margin:4px 0 8px">Campsite (optional)</p>
+  <p class="meta" style="margin:4px 0 8px">Camp / stay details (optional)</p>
   ${campFieldsHTML(emptyCamp(),"jC_")}
   <div class="field"><label>Photos</label><input type="file" id="jPh" accept="image/*" multiple capture="environment"/></div>
   <div class="field"><label>Voice</label><input type="file" id="jV" accept="audio/*" capture/></div>
@@ -1649,7 +2029,7 @@ function bind(){
 
   document.getElementById("addExp")?.addEventListener("click",()=>{const t=T();modal("Expense",`<div class="row"><div class="field" style="flex:1"><label>Amount</label><input type="number" step="0.01" id="eA"/></div>
   <div class="field" style="flex:1"><label>Currency</label><input id="eC" value="${esc(t.currency)}"/></div></div>
-  <div class="field"><label>Category</label><select id="eCat"><option>Food & drink</option><option>Stay & campsites</option><option>Fuel</option><option>Flights</option><option>Activities</option><option>Shopping</option><option>Other</option></select></div>
+  <div class="field"><label>Category</label><select id="eCat"><option>Food & drink</option><option>Stay</option><option>Fuel</option><option>Flights</option><option>Activities</option><option>Shopping</option><option>Other</option></select></div>
   <div class="field"><label>Vendor</label><input id="eV"/></div><div class="field"><label>Date</label><input type="date" id="eD" value="${new Date().toISOString().slice(0,10)}"/></div>
   <div class="field"><label><input type="checkbox" id="eS"/> Split</label></div>
   <div class="field"><label>Receipt</label><input type="file" id="eR" accept="image/*" capture="environment"/></div>`,async()=>{
@@ -1729,6 +2109,67 @@ function bind(){
   document.getElementById("btnTrailEmpty")?.addEventListener("click",()=>document.getElementById("btnTrail")?.click());
   document.getElementById("bulkPhotos")?.addEventListener("click",()=>ensureTrip(()=>qcBulkPhotos()));
   document.getElementById("bulkFromEmpty")?.addEventListener("click",()=>ensureTrip(()=>qcBulkPhotos()));
+
+  /* Community bindings */
+  document.querySelectorAll("[data-soc-tab]").forEach(b=>b.onclick=()=>{S.communityTab=b.dataset.socTab;S.socView=null;render();});
+  document.querySelectorAll("[data-open-pub]").forEach(b=>b.onclick=()=>{S.screen="community";S.socView="publicTrip";S.socTripId=b.dataset.openPub;render();});
+  document.querySelectorAll("[data-open-profile]").forEach(b=>b.onclick=()=>{S.screen="community";S.socView="profile";S.socProfileId=b.dataset.openProfile;render();});
+  document.querySelectorAll("[data-follow]").forEach(b=>b.onclick=()=>{const a=C();if(!a)return;const id=b.dataset.follow;if(a.isFollowing(id))a.unfollow(id);else a.follow(id);render();});
+  document.querySelectorAll("[data-dm]").forEach(b=>b.onclick=()=>{const a=C();if(!a)return;const other=b.dataset.dm;if(other===a.me().id)return;S.dmOtherId=other;S.dmThreadId=a.openThreadWith(other);S.screen="community";S.socView="dm";S.communityTab="messages";render();});
+  document.querySelectorAll("[data-open-dm]").forEach(b=>b.onclick=()=>{S.dmThreadId=b.dataset.openDm;S.dmOtherId=b.dataset.dmOther;S.socView="dm";render();});
+  document.querySelectorAll("[data-react-feed]").forEach(b=>b.onclick=()=>{const a=C();if(!a)return;a.reactFeed(b.dataset.reactFeed,b.dataset.emoji||"❤️");render();});
+  document.querySelectorAll("[data-react-trip]").forEach(b=>b.onclick=()=>{const a=C();if(!a)return;a.reactTrip(b.dataset.reactTrip,b.dataset.emoji||"❤️");render();});
+  document.getElementById("socBack")?.addEventListener("click",()=>{S.socView=null;S.socTripId=null;S.socProfileId=null;render();});
+  document.getElementById("socBackDm")?.addEventListener("click",()=>{S.socView=null;S.dmThreadId=null;S.communityTab="messages";render();});
+  document.getElementById("cmtSend")?.addEventListener("click",()=>{
+    const a=C();if(!a||!S.socTripId)return;const text=(document.getElementById("cmtText")?.value||"").trim();
+    if(!text){toast("Write a comment");return;}a.addComment(S.socTripId,text);render();toast("Comment posted");
+  });
+  document.getElementById("dmSend")?.addEventListener("click",()=>{
+    const a=C();if(!a||!S.dmThreadId)return;const text=(document.getElementById("dmText")?.value||"").trim();
+    if(!text)return;a.sendMessage(S.dmThreadId,S.dmOtherId,text);render();
+  });
+  document.getElementById("dmText")?.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();document.getElementById("dmSend")?.click();}});
+  document.getElementById("rvSave")?.addEventListener("click",()=>{
+    const a=C();if(!a)return;
+    const name=(document.getElementById("rvName")?.value||"").trim();
+    if(!name){toast("Name the place");return;}
+    a.addReview({placeName:name,placeType:document.getElementById("rvType").value,stayType:document.getElementById("rvType").value,
+      rating:+document.getElementById("rvRate").value||5,dates:document.getElementById("rvDates").value,
+      amenities:(document.getElementById("rvAm").value||"").split(",").map(x=>x.trim()).filter(Boolean),
+      text:document.getElementById("rvText").value||""});
+    toast("Review added");render();
+  });
+  document.getElementById("rvFromStay")?.addEventListener("click",()=>{
+    const stays=S.trips.flatMap(t=>(t.stays||[]).map(s=>({trip:t,stay:s})));
+    if(!stays.length){toast("Log a stay on a trip first");return;}
+    const opts=stays.map((x,i)=>`<option value="${i}">${esc(x.stay.name)} · ${esc(x.trip.name)}</option>`).join("");
+    modal("Review a stay",`<div class="field"><label>Stay</label><select id="pickStay">${opts}</select></div>
+    <div class="field"><label>Rating</label><select id="pickRate">${[5,4,3,2,1].map(n=>`<option value="${n}">${n}</option>`).join("")}</select></div>
+    <div class="field"><label>Review</label><textarea id="pickRev" placeholder="What should the next traveler know?"></textarea></div>`,()=>{
+      const a=C();if(!a)return;const x=stays[+document.getElementById("pickStay").value];if(!x)return;
+      const s=x.stay;const text=document.getElementById("pickRev").value||s.review||"";
+      const rating=+document.getElementById("pickRate").value||s.rating||5;
+      a.addReview({placeName:s.name,placeType:s.type==="camp"?"camp":"hotel",stayType:s.type,rating,text,
+        amenities:(s.amenities||"").split(",").map(v=>v.trim()).filter(Boolean),dates:[s.checkIn,s.checkOut].filter(Boolean).join(" → ")});
+      s.rating=rating;if(text)s.review=text;save();toast("Review published");S.communityTab="reviews";render();
+    });
+  });
+  document.getElementById("meSave")?.addEventListener("click",()=>{
+    const a=C();if(!a)return;
+    a.updateMe({displayName:document.getElementById("meName").value.trim()||"You",homeBase:document.getElementById("meHome").value.trim(),
+      bio:document.getElementById("meBio").value,avatar:document.getElementById("meAv").value.trim()||"🌿"});
+    toast("Profile saved");render();
+  });
+  document.getElementById("sbSave")?.addEventListener("click",()=>{
+    const url=(document.getElementById("sbUrl")?.value||"").trim();
+    const anonKey=(document.getElementById("sbKey")?.value||"").trim();
+    if(!url||!anonKey){toast("Need URL and anon key");return;}
+    WikilogsCommunity.setCfg({url,anonKey});WikilogsCommunity.resolveAdapter();toast("Supabase config saved");render();
+  });
+  document.getElementById("sbClear")?.addEventListener("click",()=>{WikilogsCommunity.setCfg(null);WikilogsCommunity.resolveAdapter();toast("Using demo community");render();});
+  document.getElementById("sbReset")?.addEventListener("click",()=>{if(!confirm("Reset demo community data?"))return;C().resetDemo();toast("Demo reset");render();});
+
   if(S.tab==="map"||(T()?.viewMode==="map"&&S.tab==="map"))setTimeout(()=>initMap(T()),80);
   if(S.tab==="map")setTimeout(()=>initMap(T()),80);
   setTimeout(()=>{try{if(typeof hydrateVideos==="function")hydrateVideos(document.getElementById("app"));}catch(e){}},40);

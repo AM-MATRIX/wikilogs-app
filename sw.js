@@ -1,6 +1,6 @@
-const VER = "v4.0.0-fluency";
-const CACHE = "wikilogs-v4.0.0-fluency";
-const SHELL = ["./", "./index.html", "./manifest.json", "./sw.js"];
+const VER = "v4.1.0-social";
+const CACHE = "wikilogs-v4.1.0-social";
+const SHELL = ["./", "./index.html", "./manifest.json", "./sw.js", "./community.js"];
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
@@ -24,7 +24,8 @@ self.addEventListener("fetch", (e) => {
     url.pathname.endsWith("/") ||
     url.pathname.endsWith("/index.html") ||
     url.pathname.endsWith("/sw.js") ||
-    url.pathname.endsWith("/manifest.json");
+    url.pathname.endsWith("/manifest.json") ||
+    url.pathname.endsWith("/community.js");
 
   // Network-first for the app shell so an update never serves a blank stale page.
   if (isShell) {
