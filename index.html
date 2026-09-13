@@ -1,0 +1,1381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<!-- This site is hosted on Netlify. Anyone can build and deploy a site
+     like this one for free: https://netlify.new/?utm_campaign=ai-legible&utm_source=comment&utm_medium=referral&utm_id=2646e67e-90aa-4438-9ab5-f8582f337968
+     Netlify hosting facts for this site: static/SSR served via Netlify Edge. -->
+<meta name="hosting-provider" content="Netlify">
+<meta name="netlify-deploy" content="https://netlify.new/?utm_campaign=ai-legible&amp;utm_source=meta&amp;utm_medium=referral&amp;utm_id=2646e67e-90aa-4438-9ab5-f8582f337968">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
+<meta name="theme-color" content="#1a1a1a"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="description" content="Wikilog's — any journey, one book"/>
+<link rel="manifest" href="manifest.json"/>
+<title>Wikilog's</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --bg:#f4f0ea;--paper:#fffcf7;--ink:#141414;--muted:#6b6560;--line:#e5dfd6;
+  --accent:#2c4a3e;--accent-soft:#e4efe9;--accent-fg:#f7f4ef;
+  --warm:#c45c26;--danger:#a61b1b;--radius:16px;
+  --serif:"Instrument Serif",Georgia,serif;--sans:"DM Sans",system-ui,sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{min-height:100%;background:var(--bg);color:var(--ink);font-family:var(--sans);-webkit-font-smoothing:antialiased}
+body{padding-bottom:88px}
+button,input,select,textarea{font:inherit}
+a{color:var(--accent)}
+.shell{max-width:760px;margin:0 auto;padding:0 16px 24px}
+.top{position:sticky;top:0;z-index:20;background:rgba(244,240,234,.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);margin:0 -16px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.logo{font-family:var(--serif);font-size:1.35rem;letter-spacing:-.02em}
+.logo span{font-size:.7rem;font-family:var(--sans);color:var(--muted);margin-left:8px;font-weight:500;letter-spacing:.04em}
+.icon-btn{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--paper);cursor:pointer;display:grid;place-items:center}
+.hero-cover{position:relative;margin:16px -16px 0;min-height:220px;background:linear-gradient(160deg,#1a2e26 0%,#2c4a3e 50%,#3d5c4a 100%);color:#fff;overflow:hidden}
+.hero-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:.55}
+.hero-cover .inner{position:relative;padding:48px 20px 28px;max-width:760px;margin:0 auto}
+.kicker{font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.85;font-weight:600}
+.display{font-family:var(--serif);font-size:clamp(2rem,6vw,2.75rem);line-height:1.05;margin-top:8px;letter-spacing:-.02em}
+.lede{margin-top:12px;font-size:1.05rem;line-height:1.45;opacity:.9;max-width:28em}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.15);font-size:12px;margin-top:16px;backdrop-filter:blur(6px)}
+.section{margin-top:28px}
+.section-title{font-family:var(--serif);font-size:1.5rem;margin-bottom:12px}
+.trip-card{display:block;width:100%;text-align:left;border:none;background:var(--paper);border-radius:var(--radius);overflow:hidden;box-shadow:0 1px 0 var(--line),0 8px 24px rgba(20,20,20,.04);cursor:pointer;margin-bottom:14px;transition:transform .15s}
+.trip-card:active{transform:scale(.99)}
+.trip-card .thumb{height:140px;background:linear-gradient(135deg,#2c4a3e,#5a7d6c);position:relative}
+.trip-card .thumb img{width:100%;height:100%;object-fit:cover}
+.trip-card .body{padding:16px 18px 18px}
+.trip-card h3{font-family:var(--serif);font-size:1.45rem;font-weight:400}
+.meta{color:var(--muted);font-size:13px;margin-top:4px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;padding:0 20px;border-radius:999px;border:none;background:var(--accent);color:var(--accent-fg);font-weight:600;cursor:pointer;font-size:15px}
+.btn-ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.btn-soft{background:var(--accent-soft);color:var(--accent)}
+.btn-sm{min-height:36px;padding:0 14px;font-size:13px}
+.btn-block{width:100%}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.row-between{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.panel{background:var(--paper);border-radius:var(--radius);padding:18px;margin-top:12px;border:1px solid var(--line)}
+.tabs{display:flex;gap:4px;overflow-x:auto;padding:6px;background:var(--paper);border-radius:999px;border:1px solid var(--line);margin:16px 0;scrollbar-width:none}
+.tab{flex:0 0 auto;border:none;background:transparent;padding:10px 14px;border-radius:999px;color:var(--muted);cursor:pointer;font-size:13px;font-weight:500}
+.tab.active{background:var(--ink);color:#fff}
+label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500}
+input,select,textarea{width:100%;min-height:48px;padding:12px 14px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+textarea{min-height:100px;resize:vertical}
+.field{margin-bottom:14px}
+.list{list-style:none}
+.list li{padding:14px 0;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start}
+.list li:last-child{border-bottom:none}
+.check{width:22px;height:22px;margin-top:2px;accent-color:var(--accent)}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px}
+.photo-grid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 0}
+.stat{background:var(--bg);border-radius:14px;padding:14px 10px;text-align:center}
+.stat b{display:block;font-family:var(--serif);font-size:1.5rem;font-weight:400}
+.stat span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.bar{height:6px;background:var(--line);border-radius:99px;overflow:hidden;margin-top:8px}
+.bar>i{display:block;height:100%;background:var(--accent)}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:600}
+.prompt{display:inline-block;margin:4px 6px 0 0;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-size:12px;cursor:pointer}
+#map{height:320px;border-radius:var(--radius);border:1px solid var(--line);margin-top:8px}
+.map-hero{height:min(42vh,340px);margin:0 -16px;border-radius:0;border:none}
+.entry{border-left:3px solid var(--accent);padding:4px 0 4px 16px;margin:18px 0}
+.entry .when{font-size:12px;color:var(--muted);letter-spacing:.04em}
+.entry h4{font-family:var(--serif);font-size:1.25rem;font-weight:400;margin-top:4px}
+.fab{position:fixed;right:18px;bottom:96px;z-index:25;width:58px;height:58px;border-radius:50%;border:none;background:var(--ink);color:#fff;font-size:28px;box-shadow:0 8px 24px rgba(0,0,0,.25);cursor:pointer}
+.dock{position:fixed;left:12px;right:12px;bottom:12px;z-index:30;background:rgba(255,252,247,.95);backdrop-filter:blur(12px);border:1px solid var(--line);border-radius:20px;padding:8px;display:flex;justify-content:space-around;box-shadow:0 8px 30px rgba(0,0,0,.08)}
+.dock button{flex:1;border:none;background:transparent;padding:10px 6px;border-radius:14px;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer}
+.dock button.on{background:var(--accent-soft);color:var(--accent)}
+.modal-bg{position:fixed;inset:0;background:rgba(20,20,20,.5);z-index:50;display:flex;align-items:flex-end;justify-content:center;padding:12px}
+.modal{background:var(--paper);border-radius:20px 20px 16px 16px;width:100%;max-width:520px;max-height:88vh;overflow:auto;padding:20px}
+.modal h2{font-family:var(--serif);font-size:1.5rem;margin-bottom:14px;font-weight:400}
+.toast{position:fixed;left:50%;bottom:100px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 18px;border-radius:999px;font-size:14px;z-index:60;max-width:90%}
+.hidden{display:none!important}
+.empty{text-align:center;padding:40px 20px;color:var(--muted)}
+.empty .ill{font-size:48px;margin-bottom:12px;opacity:.5}
+.mode-switch{display:flex;gap:6px;margin:12px 0}
+.mode-switch button{flex:1;border:1px solid var(--line);background:var(--paper);padding:10px;border-radius:12px;cursor:pointer;font-size:13px;font-weight:500}
+.mode-switch button.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+
+.share-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.storyline{display:flex;gap:12px;overflow-x:auto;padding:4px 2px 12px;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch}
+.story-clip{flex:0 0 72%;max-width:280px;scroll-snap-align:start;background:var(--paper);border:1px solid var(--line);border-radius:16px;overflow:hidden}
+.story-clip video{width:100%;aspect-ratio:9/16;object-fit:cover;background:#000;display:block;max-height:360px}
+.video-wrap{position:relative;display:block;border-radius:12px;overflow:hidden;background:#000}
+.video-wrap video{width:100%;display:block;max-height:360px;border-radius:0}
+.wm-badge{position:absolute;right:10px;bottom:10px;z-index:2;background:rgba(20,20,20,.72);color:#fffcf7;font:600 12px DM Sans,system-ui,sans-serif;padding:6px 10px;border-radius:8px;pointer-events:none;letter-spacing:.02em}
+.wm-badge small{display:block;font-weight:500;font-size:9px;opacity:.85;margin-top:1px}
+.cam-overlay{position:fixed;inset:0;z-index:100;background:#0a0a0a;display:flex;flex-direction:column;color:#fff}
+.cam-overlay.hidden{display:none}
+.cam-top{flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));background:rgba(0,0,0,.55)}
+.cam-top .cam-timer{font-variant-numeric:tabular-nums;font-weight:600;font-size:15px;letter-spacing:.04em}
+.cam-top button{background:transparent;border:0;color:#fff;font-size:15px;padding:8px 12px;cursor:pointer}
+.cam-stage{flex:1;position:relative;min-height:0;background:#111;display:flex;align-items:center;justify-content:center}
+.cam-stage video{width:100%;height:100%;object-fit:cover;background:#000}
+.cam-stage .wm-badge{right:14px;bottom:14px}
+.cam-bottom{flex:0 0 auto;padding:16px 24px;padding-bottom:max(20px,env(safe-area-inset-bottom));background:rgba(0,0,0,.75);display:flex;align-items:center;justify-content:space-around;gap:12px}
+.cam-bottom .cam-side{width:52px;height:52px;border-radius:50%;border:2px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;font-size:12px;font-weight:600;cursor:pointer;display:grid;place-items:center}
+.cam-shutter{width:74px;height:74px;border-radius:50%;border:4px solid #fff;background:#e11;cursor:pointer;box-shadow:0 0 0 3px rgba(0,0,0,.35);position:relative}
+.cam-shutter.rec{background:#111;border-color:#e11}
+.cam-shutter.rec::after{content:"";position:absolute;inset:22px;background:#e11;border-radius:6px}
+.cam-hint{text-align:center;font-size:12px;opacity:.75;padding:0 16px 8px;background:rgba(0,0,0,.75)}
+.story-clip .cap{padding:10px 12px}
+.story-clip .cap strong{display:block;font-size:.95rem}
+.story-tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.chip-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:6px}
+.chip{flex:0 0 auto;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-size:13px;cursor:pointer}
+.chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.share-row .btn{flex:1;min-width:100px}
+.story-badge{font-size:11px;color:var(--warm);font-weight:600}
+#storyPreview{width:100%;max-height:200px;border-radius:12px;margin-top:8px;background:#000}
+
+@media print{.top,.dock,.fab,.tabs,.mode-switch,.toast,.modal-bg,.no-print{display:none!important}body{background:#fff;padding:0}.shell{max-width:none}.panel{border:none;box-shadow:none}}
+</style>
+</head>
+<body>
+<div class="shell" id="app"></div>
+<button class="fab no-print" id="fab" title="Quick log">+</button>
+<nav class="dock no-print" id="dock"></nav>
+<div id="modalRoot"></div>
+<div id="camOverlay" class="cam-overlay hidden" aria-hidden="true">
+  <div class="cam-top">
+    <button type="button" id="camClose">Close</button>
+    <div class="cam-timer" id="camTimer">00:00</div>
+    <button type="button" id="camFacingLbl">Back</button>
+  </div>
+  <div class="cam-stage">
+    <video id="camVideo" playsinline muted autoplay></video>
+    <div class="wm-badge">Wikilog's<small>any journey, one book</small></div>
+  </div>
+  <div class="cam-hint" id="camHint">Flip · Record · Stop</div>
+  <div class="cam-bottom">
+    <button type="button" class="cam-side" id="camFlipBtn">Flip</button>
+    <button type="button" class="cam-shutter" id="camShutter" aria-label="Record"></button>
+    <button type="button" class="cam-side" id="camPickBtn">Gallery</button>
+  </div>
+  <input type="file" id="camFile" accept="video/*" class="hidden"/>
+</div>
+<div id="toast" class="toast hidden"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+(function(){
+const VER="v3.9.5-flip";
+const STORAGE="wikilogs_v3";
+const uid=p=>p+"_"+Math.random().toString(36).slice(2,9);
+const PROMPTS=["Best meal","Hardest moment","Something funny","Tip for next time","Road note","People we met"];
+const TPL=[
+{id:"o",name:"Overland / camper",items:[{c:"Docs",n:"Passports & visas"},{c:"Docs",n:"Vehicle papers"},{c:"Camp",n:"Gas & stove"},{c:"Vehicle",n:"Spare + compressor"},{c:"Kitchen",n:"Cooler & water"},{c:"Personal",n:"First aid & sun"}]},
+{id:"f",name:"Flight travel",items:[{c:"Docs",n:"Passport / ID"},{c:"Docs",n:"Boarding passes"},{c:"Bag",n:"Chargers"},{c:"Bag",n:"Medicines"},{c:"Clothes",n:"Outfits + shoes"}]},
+{id:"r",name:"Family road trip",items:[{c:"Kids",n:"Snacks"},{c:"Kids",n:"Entertainment"},{c:"Safety",n:"First aid"},{c:"Docs",n:"Bookings"}]}
+];
+const PRE=[{n:"Passports valid 6+ months"},{n:"Travel insurance"},{n:"Visas checked"},{n:"Vehicle ready / hire"},{n:"Cash & cards"},{n:"Offline maps"},{n:"Emergency contacts"}];
+
+function sample(){return{id:uid("t"),name:"Namibia Kaokoland",startDate:"2026-09-01",endDate:"2026-09-18",summary:"Windhoek to Opuwo and Epupa Falls — gravel, Himba country, Kunene spray.",currency:"NAD",budget:25000,cover:null,bookLayout:"balanced",viewMode:"magazine",
+destinations:[{id:uid("d"),name:"Windhoek",country:"Namibia",notes:"",lat:-22.56,lng:17.08},{id:uid("d"),name:"Opuwo",country:"Namibia",notes:"Last reliable fuel north.",lat:-18.06,lng:13.84},{id:uid("d"),name:"Epupa Falls",country:"Namibia",notes:"Kunene River.",lat:-17.0,lng:13.25}],
+legs:[{id:uid("l"),mode:"flight",from:"Cape Town",to:"Windhoek",notes:""},{id:uid("l"),mode:"car",from:"Windhoek",to:"Opuwo",notes:"C43"}],
+packing:TPL[0].items.map(i=>({id:uid("p"),cat:i.c,name:i.n,done:false})),packingName:TPL[0].name,
+pretrip:PRE.map(x=>({id:uid("pt"),name:x.n,done:false})),
+days:[],expenses:[],bookings:[],docs:[],trail:[],storyline:[],createdAt:new Date().toISOString()};}
+
+let S={trips:[],lists:TPL.map(t=>({id:t.id,name:t.name,items:t.items.map(i=>({id:uid("i"),cat:i.c,name:i.n}))})),screen:"home",tripId:null,tab:"story",map:null,watching:false,watchId:null};
+
+function load(){try{let r=localStorage.getItem(STORAGE);if(!r)r=localStorage.getItem("waybook_v3");if(!r)r=localStorage.getItem("waybook_v2");if(r){const p=JSON.parse(r);S.trips=p.trips||[];if(p.lists?.length)S.lists=p.lists;}}catch(e){}
+if(!S.trips.length){S.trips=[sample()];save();}}
+function save(){localStorage.setItem(STORAGE,JSON.stringify({trips:S.trips,lists:S.lists,ver:VER}));}
+function T(){return S.trips.find(t=>t.id===S.tripId)||null;}
+function toast(m){const e=document.getElementById("toast");e.textContent=m;e.classList.remove("hidden");setTimeout(()=>e.classList.add("hidden"),2500);}
+function esc(s){return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+function fileURL(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(f);});}
+
+const IDB_NAME="wikilogs_media_v1";
+function openMediaDB(){return new Promise((res,rej)=>{const r=indexedDB.open(IDB_NAME,1);r.onupgradeneeded=()=>{const db=r.result;if(!db.objectStoreNames.contains("blobs"))db.createObjectStore("blobs");};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function mediaPut(id,blob){const db=await openMediaDB();return new Promise((res,rej)=>{const tx=db.transaction("blobs","readwrite");tx.objectStore("blobs").put(blob,id);tx.oncomplete=()=>res(id);tx.onerror=()=>rej(tx.error);});}
+async function mediaGet(id){const db=await openMediaDB();return new Promise((res,rej)=>{const q=db.transaction("blobs").objectStore("blobs").get(id);q.onsuccess=()=>res(q.result||null);q.onerror=()=>rej(q.error);});}
+async function mediaUrl(id){const b=await mediaGet(id);return b?URL.createObjectURL(b):null;}
+async function hydrateVideos(root){for(const v of (root||document).querySelectorAll("video[data-media]")){if(v.dataset.hydrated)continue;const id=v.getAttribute("data-media");if(!id)continue;try{const u=await mediaUrl(id);if(u){v.src=u;v.dataset.hydrated="1";}}catch(e){}}}
+
+function daysLeft(d){if(!d)return null;const a=new Date(d+"T12:00:00"),b=new Date();b.setHours(12,0,0,0);return Math.ceil((a-b)/86400000);}
+function spent(t){return(t.expenses||[]).reduce((s,e)=>s+Number(e.amount||0),0);}
+function allStoryClips(t){
+  const out=[];
+  (t.storyline||[]).forEach(c=>out.push({...c,source:"storyline"}));
+  (t.days||[]).forEach(d=>{
+    if(d.story)out.push({id:d.id+"-main",media:d.story,title:d.title||"Journal clip",place:d.place,date:d.date,dayId:d.id,source:"journal"});
+    (d.storyClips||[]).forEach(c=>out.push({...c,dayId:d.id,date:d.date||c.date,source:"journal"}));
+  });
+  out.sort((a,b)=>(a.date||"").localeCompare(b.date||"")||(a.title||"").localeCompare(b.title||""));
+  return out;
+}
+function hav(a,b){const R=6371,r=x=>x*Math.PI/180;const dLat=r(b.lat-a.lat),dLng=r(b.lng-a.lng);const x=Math.sin(dLat/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
+
+function render(){
+  const app=document.getElementById("app"),dock=document.getElementById("dock");
+  if(S.screen==="home"){app.innerHTML=home();dock.innerHTML=dockHTML("home");}
+  else if(S.screen==="lists"){app.innerHTML=lists();dock.innerHTML=dockHTML("lists");}
+  else{const t=T();if(!t){S.screen="home";return render();}app.innerHTML=tripView(t);dock.innerHTML=dockHTML("trip");}
+  bind();
+}
+function dockHTML(a){return`<button class="${a==="home"?"on":""}" data-go="home">Trips</button>
+<button class="${a==="lists"?"on":""}" data-go="lists">Pack</button>
+<button class="${a==="trip"?"on":""}" data-go="trip-or-home">${S.tripId?"Open":"Trip"}</button>`;}
+
+function home(){
+  return`<div class="top"><div class="logo">Wikilog's <span>${VER}</span></div>
+  <button class="btn btn-sm" id="btnNew">New trip</button></div>
+  <div class="hero-cover"><div class="inner">
+  <div class="kicker">Travel journal</div>
+  <h1 class="display">Any journey,<br/>one book</h1>
+  <p class="lede">Editorial log for flights, roads and campers. Map the route, write the days, print the story.</p>
+  </div></div>
+  <div class="section">
+  <div class="row-between"><h2 class="section-title">Your trips</h2>
+  <div class="row"><button class="btn btn-ghost btn-sm" id="btnExport">Export</button>
+  <button class="btn btn-ghost btn-sm" id="btnImport">Import</button>
+  <input type="file" id="importFile" accept=".json,application/json" class="hidden"/></div></div>
+  ${S.trips.map(t=>{
+    const left=daysLeft(t.startDate);
+    const chip=left!=null&&left>=0?`${left===0?"Today":left+" days"}`:"";
+    return`<button class="trip-card" data-open="${t.id}">
+      <div class="thumb">${t.cover?`<img src="${t.cover}" alt=""/>`:""}</div>
+      <div class="body"><h3>${esc(t.name)}</h3>
+      <div class="meta">${esc([t.startDate,t.endDate].filter(Boolean).join(" → ")||"Dates open")}
+      ${chip?` · <span class="badge">${chip}</span>`:""}</div>
+      <div class="meta">${esc((t.destinations||[]).map(d=>d.name).join(" · "))}</div>
+      </div></button>`;}).join("")||`<div class="empty"><div class="ill">✦</div>No trips yet</div>`}
+  </div>`;
+}
+function lists(){
+  return`<div class="top"><div class="logo">Packing</div><button class="icon-btn" data-go="home">←</button></div>
+  <div class="section"><p class="meta">Templates you load into a trip.</p>
+  ${S.lists.map(L=>`<div class="panel"><strong>${esc(L.name)}</strong>
+  <ul class="list">${L.items.map(i=>`<li><span class="meta">${esc(i.cat)}</span> · ${esc(i.name)}</li>`).join("")}</ul></div>`).join("")}
+  </div>`;
+}
+function tripView(t){
+  const mode=t.viewMode||"magazine";
+  const tabs=[["story","Story"],["map","Map"],["log","Journal"],["pack","Pack"],["spend","Spend"],["docs","Docs"],["book","Book"]];
+  const cover=t.cover?`<img src="${t.cover}" alt=""/>`:"";
+  const head=mode==="map"?"":`<div class="hero-cover" style="min-height:200px">${cover}<div class="inner">
+  <div class="kicker">${esc([t.startDate,t.endDate].filter(Boolean).join(" · "))}</div>
+  <h1 class="display">${esc(t.name)}</h1>
+  <p class="lede">${esc(t.summary||"")}</p>
+  </div></div>`;
+  return`<div class="top no-print"><button class="icon-btn" data-go="home">←</button>
+  <div class="logo" style="font-size:1.1rem">${esc(t.name)}</div>
+  <button class="btn btn-sm btn-ghost" id="btnShare">Share</button></div>
+  ${head}
+  <div class="mode-switch no-print">
+  <button class="${mode==="magazine"?"on":""}" data-mode="magazine">Editorial</button>
+  <button class="${mode==="map"?"on":""}" data-mode="map">Map first</button>
+  </div>
+  <div class="tabs no-print">${tabs.map(([id,l])=>`<button class="tab ${S.tab===id?"active":""}" data-tab="${id}">${l}</button>`).join("")}</div>
+  <div id="body">${tab(t)}</div>`;
+}
+function tab(t){
+  if(S.tab==="story")return tabStory(t);
+  if(S.tab==="map")return tabMap(t);
+  if(S.tab==="log")return tabLog(t);
+  if(S.tab==="pack")return tabPack(t);
+  if(S.tab==="spend")return tabSpend(t);
+  if(S.tab==="docs")return tabDocs(t);
+  if(S.tab==="book")return tabBook(t);
+  return"";
+}
+function tabStory(t){
+  const s=spent(t),bud=+t.budget||0,pct=bud?Math.min(100,Math.round(s/bud*100)):0,left=daysLeft(t.startDate);
+  const clips=allStoryClips(t);
+  const reel=clips.length?`<div class="panel" style="padding-bottom:4px">
+  <div class="row-between" style="margin-bottom:8px"><strong>Storyline</strong><span class="meta">${clips.length} clip${clips.length>1?"s":""}</span></div>
+  <div class="storyline" id="storylineReel">${clips.map((c,i)=>`<div class="story-clip">
+    <div class="video-wrap"><video data-media="${String(c.media||"").startsWith("idb:")?String(c.media).slice(4):""}" src="${String(c.media||"").startsWith("idb:")?"":esc(c.media||"")}" controls playsinline webkit-playsinline preload="metadata"></video><div class="wm-badge">Wikilog's<small>any journey, one book</small></div></div>
+    <div class="cap"><strong>${esc(c.title||("Clip "+(i+1)))}</strong>
+    <span class="meta">${esc([c.place,c.date,c.source].filter(Boolean).join(" · "))}</span>
+    <div class="share-row" style="margin-top:8px">
+      <button class="btn btn-soft btn-sm" data-share-clip="${esc(c.id)}">Share · Wikilog's</button>
+      ${c.source==="storyline"?`<button class="btn btn-ghost btn-sm" data-del-clip="${esc(c.id)}">Delete</button>`:""}
+    </div></div>
+  </div>`).join("")}</div>
+  <div class="story-tools">
+    <button class="btn btn-sm" id="addStoryClip">+ Storyline clip</button>
+    <button class="btn btn-ghost btn-sm" id="playStoryline">Play in order</button>
+  </div>
+  <p class="meta">Clips from journal + clips you add here. Max 3 min each.</p>
+  </div>`:`<div class="panel"><strong>Storyline</strong>
+  <p class="meta" style="margin:8px 0 12px">Build a reel of short clips for this trip — from the journal or add them here.</p>
+  <button class="btn btn-sm" id="addStoryClip">+ First storyline clip</button></div>`;
+  return`${reel}<div class="stat-row">
+  <div class="stat"><b>${(t.days||[]).length}</b><span>Entries</span></div>
+  <div class="stat"><b>${(t.destinations||[]).length}</b><span>Places</span></div>
+  <div class="stat"><b>${s.toFixed(0)}</b><span>${esc(t.currency)}</span></div>
+  </div>
+  ${bud?`<div class="panel"><div class="row-between"><span class="meta">Budget</span><span>${pct}% used · ${Math.max(0,bud-s).toFixed(0)} left</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>`:""}
+  ${left!=null&&left>=0?`<div class="panel"><span class="badge">${left===0?"Departs today":left+" days to go"}</span></div>`:""}
+  <div class="panel">
+  <div class="field"><label>Trip name</label><input id="ovName" value="${esc(t.name)}"/></div>
+  <div class="row"><div class="field" style="flex:1"><label>Start</label><input type="date" id="ovStart" value="${esc(t.startDate)}"/></div>
+  <div class="field" style="flex:1"><label>End</label><input type="date" id="ovEnd" value="${esc(t.endDate)}"/></div></div>
+  <div class="row"><div class="field" style="flex:1"><label>Currency</label><input id="ovCur" value="${esc(t.currency)}"/></div>
+  <div class="field" style="flex:1"><label>Budget</label><input type="number" id="ovBud" value="${esc(t.budget||"")}"/></div></div>
+  <div class="field"><label>Story lede</label><textarea id="ovSum">${esc(t.summary)}</textarea></div>
+  <div class="field"><label>Cover image</label><input type="file" id="ovCover" accept="image/*"/></div>
+  <div class="field"><label>Book layout</label><select id="ovLayout">
+  <option value="balanced" ${t.bookLayout==="balanced"?"selected":""}>Balanced</option>
+  <option value="photo" ${t.bookLayout==="photo"?"selected":""}>Photo-heavy</option>
+  <option value="text" ${t.bookLayout==="text"?"selected":""}>Text-heavy</option>
+  <option value="guide" ${t.bookLayout==="guide"?"selected":""}>Guide mode</option></select></div>
+  <button class="btn" id="ovSave">Save story</button>
+  </div>
+  <div class="panel"><h3 class="section-title" style="font-size:1.2rem">Pre-trip</h3>
+  <ul class="list">${(t.pretrip||[]).map(p=>`<li><input class="check" type="checkbox" data-pt="${p.id}" ${p.done?"checked":""}/><div>${esc(p.name)}</div></li>`).join("")}</ul>
+  <div class="row"><input id="ptNew" placeholder="Add item" style="flex:1"/><button class="btn btn-sm" id="ptAdd">Add</button></div>
+  </div>
+  <div class="panel"><div class="row-between"><h3 class="section-title" style="font-size:1.2rem;margin:0">Route</h3>
+  <button class="btn btn-sm btn-soft" id="addDest">+ Place</button></div>
+  <ul class="list">${(t.destinations||[]).map(d=>`<li><div style="flex:1"><strong>${esc(d.name)}</strong><div class="meta">${esc(d.country)} ${d.notes?"· "+esc(d.notes):""}</div></div>
+  <button class="btn btn-ghost btn-sm" data-del-dest="${d.id}">×</button></li>`).join("")}</ul>
+  <button class="btn btn-ghost btn-sm" id="addLeg">+ Travel leg</button>
+  <ul class="list">${(t.legs||[]).map(l=>`<li><div style="flex:1"><strong>${esc(l.mode)}</strong> ${esc(l.from)} → ${esc(l.to)}</div>
+  <button class="btn btn-ghost btn-sm" data-del-leg="${l.id}">×</button></li>`).join("")}</ul>
+  <button class="btn btn-ghost btn-sm" id="addBook">+ Booking</button>
+  <ul class="list">${(t.bookings||[]).map(b=>`<li><div style="flex:1"><strong>${esc(b.type)}</strong> ${esc(b.title)}<div class="meta">${esc(b.ref)}</div></div>
+  <button class="btn btn-ghost btn-sm" data-del-book="${b.id}">×</button></li>`).join("")}</ul>
+  </div>
+  <button class="btn btn-ghost btn-block" id="btnDel" style="margin-top:16px;color:var(--danger)">Delete trip</button>`;
+}
+function tabMap(t){
+  return`<div class="panel no-print"><div class="row-between"><strong>Live map</strong>
+  <div class="row"><button class="btn btn-sm btn-soft" id="btnTrail">${S.watching?"Stop trail":"Start trail"}</button>
+  <button class="btn btn-sm btn-ghost" id="btnClearTrail">Clear</button></div></div>
+  <p class="meta">Pins from places + optional GPS breadcrumb.</p></div>
+  <div id="map" class="${(t.viewMode==="map")?"map-hero":""}"></div>
+  <p class="meta" style="margin-top:8px">${(t.trail||[]).length} trail points</p>`;
+}
+function tabLog(t){
+  const days=[...(t.days||[])].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  return`<div class="row-between no-print"><div>${PROMPTS.map(p=>`<span class="prompt" data-prompt="${esc(p)}">${esc(p)}</span>`).join("")}</div>
+  <button class="btn btn-sm" id="addDay">+ Entry</button></div>
+  ${days.length?days.map(d=>`<article class="entry panel" style="border-left:none">
+  <div class="row-between"><div class="when">${esc(d.date)} · ${esc(d.time)} ${d.place?"· "+esc(d.place):""}</div>
+  <div class="row"><button class="btn btn-ghost btn-sm" data-del-day="${d.id}">×</button></div></div>
+  <h4>${esc(d.title||"Moment")}</h4>
+  <p style="margin-top:8px;line-height:1.5;white-space:pre-wrap">${esc(d.notes)}</p>
+  ${d.voice?`<audio controls src="${d.voice}" style="width:100%;margin-top:10px"></audio>`:""}
+  ${d.story?`<div class="story-badge" style="margin-top:8px">Video clip</div><div class="video-wrap" style="margin-top:6px"><video data-media="${String(d.story).startsWith(`idb:`)?String(d.story).slice(4):``}" src="${String(d.story).startsWith(`idb:`)?``:d.story}" controls playsinline webkit-playsinline preload="metadata"></video><div class="wm-badge">Wikilog's<small>any journey, one book</small></div></div>`:""}
+  ${(d.photos||[]).length?`<div class="photo-grid">${d.photos.map(p=>`<img src="${p}" alt=""/>`).join("")}</div>`:""}
+  <div class="share-row no-print">
+  ${d.story?`<button class="btn btn-soft btn-sm" data-share-story="${d.id}">Share video · Wikilog's</button>`:((d.photos||[]).length?`<button class="btn btn-soft btn-sm" data-share-day="${d.id}">Share photo card</button>`:"")}
+  </div>
+  </article>`).join(""):`<div class="empty"><div class="ill">✎</div>No entries — tap + or a prompt</div>`}`;
+}
+function tabPack(t){
+  const items=t.packing||[],done=items.filter(i=>i.done).length;
+  return`<div class="panel"><div class="row-between"><div><strong>${esc(t.packingName||"Packing")}</strong>
+  <div class="meta">${done}/${items.length} packed</div></div></div>
+  <div class="field" style="margin-top:12px"><label>Load template</label>
+  <select id="packLoad"><option value="">Choose…</option>${S.lists.map(L=>`<option value="${L.id}">${esc(L.name)}</option>`).join("")}</select></div>
+  <button class="btn btn-soft btn-sm" id="packApply">Apply template</button></div>
+  <div class="panel"><ul class="list">${items.map(i=>`<li><input class="check" type="checkbox" data-pack="${i.id}" ${i.done?"checked":""}/>
+  <div style="flex:1"><span class="meta">${esc(i.cat)}</span><div>${esc(i.name)}</div></div>
+  <button class="btn btn-ghost btn-sm" data-del-pack="${i.id}">×</button></li>`).join("")}</ul>
+  <div class="row"><input id="pn" placeholder="Item" style="flex:1"/><input id="pc" placeholder="Cat" style="width:90px"/>
+  <button class="btn btn-sm" id="packAdd">Add</button></div></div>`;
+}
+function tabSpend(t){
+  const total=spent(t),bud=+t.budget||0,by={};
+  (t.expenses||[]).forEach(e=>by[e.category]=(by[e.category]||0)+Number(e.amount||0));
+  return`<div class="row-between"><div><div class="display" style="font-size:1.8rem">${total.toFixed(2)}</div>
+  <div class="meta">${esc(t.currency)}${bud?` · ${Math.max(0,bud-total).toFixed(0)} left`:""}</div></div>
+  <button class="btn btn-sm" id="addExp">+ Expense</button></div>
+  <div class="panel">${Object.entries(by).map(([k,v])=>`<div class="row-between" style="margin:6px 0"><span class="meta">${esc(k)}</span><span>${v.toFixed(2)}</span></div>`).join("")||"<span class='meta'>No spend yet</span>"}</div>
+  <ul class="list panel">${(t.expenses||[]).map(e=>`<li><div style="flex:1"><strong>${esc(e.category)}</strong> ${Number(e.amount).toFixed(2)}
+  ${e.split?`<span class="badge">split</span>`:""}<div class="meta">${esc(e.date)} ${esc(e.vendor||"")}</div>
+  ${e.receipt?`<img src="${e.receipt}" style="max-width:100px;margin-top:6px;border-radius:8px"/>`:""}</div>
+  <button class="btn btn-ghost btn-sm" data-del-exp="${e.id}">×</button></li>`).join("")||"<li class='meta'>Empty</li>"}</ul>`;
+}
+function tabDocs(t){
+  return`<div class="panel"><div class="row-between"><strong>Document vault</strong><button class="btn btn-sm" id="addDoc">+ Add</button></div>
+  <p class="meta">On this device until Drive OAuth sync.</p>
+  <ul class="list">${(t.docs||[]).map(d=>`<li><div style="flex:1"><strong>${esc(d.title)}</strong><div class="meta">${esc(d.kind)}</div>
+  ${d.data?`<a href="${d.data}" download>Open file</a>`:""}</div>
+  <button class="btn btn-ghost btn-sm" data-del-doc="${d.id}">×</button></li>`).join("")||"<li class='meta'>No docs</li>"}</ul></div>`;
+}
+function tabBook(t){
+  const total=spent(t),days=[...(t.days||[])].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const layout=t.bookLayout||"balanced";
+  return`<div class="no-print row-between" style="margin-bottom:12px"><span class="meta">Layout: ${esc(layout)}</span>
+  <button class="btn" id="btnPrint">Print / PDF</button></div>
+  <div class="panel">
+  ${t.cover?`<img src="${t.cover}" style="width:100%;height:180px;object-fit:cover;border-radius:12px;margin-bottom:16px"/>`:""}
+  <div class="kicker">Wikilog's</div>
+  <h1 class="display" style="font-size:2.2rem">${esc(t.name)}</h1>
+  <p class="meta">${esc([t.startDate,t.endDate].filter(Boolean).join(" – "))}</p>
+  <p style="margin-top:14px;line-height:1.5">${esc(t.summary)}</p>
+  <h2 class="section-title" style="margin-top:24px">Route</h2>
+  <ol style="padding-left:18px">${(t.destinations||[]).map(d=>`<li style="margin:8px 0">${esc(d.name)}${d.country?", "+esc(d.country):""}</li>`).join("")}</ol>
+  <h2 class="section-title" style="margin-top:24px">Journal</h2>
+  ${days.map(d=>`<div class="entry"><div class="when">${esc(d.date)} · ${esc(d.title)}</div>
+  <p style="margin-top:6px">${esc(d.notes)}</p>
+  ${layout!=="text"&&(d.photos||[]).length?`<div class="photo-grid">${d.photos.slice(0,layout==="photo"?9:3).map(p=>`<img src="${p}"/>`).join("")}</div>`:""}
+  </div>`).join("")||"<p class='meta'>No entries</p>"}
+  <h2 class="section-title" style="margin-top:24px">Spending</h2>
+  <p><strong>${total.toFixed(2)} ${esc(t.currency)}</strong></p>
+  </div>`;
+}
+
+function modal(title,body,onOk){
+  const root=document.getElementById("modalRoot");
+  root.innerHTML=`<div class="modal-bg"><div class="modal"><h2>${esc(title)}</h2>${body}
+  <div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn btn-ghost" id="mc">Cancel</button>
+  <button class="btn" id="mok">Save</button></div></div></div>`;
+  document.getElementById("mc").onclick=()=>root.innerHTML="";
+  document.getElementById("mok").onclick=async()=>{await onOk();root.innerHTML="";};
+}
+function patch(fn){const t=T();if(!t)return;fn(t);save();render();}
+
+function brandLogo(ctx,w,h){
+  const pad=16, bw=128, bh=28, x=w-bw-pad, y=h-bh-pad;
+  ctx.fillStyle="rgba(20,20,20,0.72)";
+  ctx.fillRect(x,y,bw,bh);
+  ctx.fillStyle="#fffcf7";ctx.font="600 13px DM Sans,system-ui,sans-serif";
+  ctx.fillText("Wikilog\'s", x+14, y+19);
+}
+function loadImg(src){return new Promise((res,rej)=>{const i=new Image();i.crossOrigin="anonymous";i.onload=()=>res(i);i.onerror=rej;i.src=src;});}
+async function makeShareCard({photo,title,place,date,tripName}){
+  const W=1080,H=1350;const c=document.createElement("canvas");c.width=W;c.height=H;const ctx=c.getContext("2d");
+  ctx.fillStyle="#1a2e26";ctx.fillRect(0,0,W,H);
+  if(photo){try{const img=await loadImg(photo);const scale=Math.max(W/img.width,H*0.72/img.height);const iw=img.width*scale,ih=img.height*scale;
+    ctx.drawImage(img,(W-iw)/2,0,iw,ih);}catch(e){}}
+  const g=ctx.createLinearGradient(0,H*0.45,0,H);g.addColorStop(0,"rgba(20,20,20,0)");g.addColorStop(1,"rgba(20,20,20,0.92)");
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  ctx.fillStyle="#fffcf7";ctx.font="400 52px Instrument Serif,Georgia,serif";
+  const lines=[];let line="";(title||"Travel moment").split(" ").forEach(w=>{const t=line?line+" "+w:w;if(ctx.measureText(t).width>W-80){lines.push(line);line=w;}else line=t;});if(line)lines.push(line);
+  lines.slice(0,3).forEach((ln,i)=>ctx.fillText(ln,40,H-180+i*58));
+  ctx.font="500 22px DM Sans,system-ui,sans-serif";ctx.fillStyle="rgba(255,252,247,0.85)";
+  ctx.fillText([place,date].filter(Boolean).join(" · "),40,H-40);
+  ctx.fillText(tripName||"",40,H-70);
+  brandLogo(ctx,W,H);
+  return new Promise(res=>c.toBlob(b=>res(b),"image/jpeg",0.92));
+}
+async function shareBranded(entry,trip){
+  const text=`${entry.title||"Update"}${entry.place?" — "+entry.place:""}\n${entry.notes||""}\n\nShared with Wikilog's — any journey, one book\n#Wikilogs #TravelJournal`;
+  const photo=(entry.photos&&entry.photos[0])||trip.cover||null;
+  try{
+    const blob=await makeShareCard({photo,title:entry.title||"On the road",place:entry.place,date:entry.date,tripName:trip.name});
+    const file=new File([blob],"wikilogs-share.jpg",{type:"image/jpeg"});
+    if(navigator.canShare&&navigator.canShare({files:[file]})){
+      await navigator.share({files:[file],title:trip.name,text});
+      toast("Open Instagram / TikTok / X from the share list");
+      return;
+    }
+    if(navigator.share){await navigator.share({title:trip.name,text});toast("Shared");return;}
+  }catch(e){if(e&&e.name==="AbortError")return;}
+  try{await navigator.clipboard.writeText(text);toast("Caption copied — paste in your app");}catch(e){toast("Share not available");}
+}
+async function shareStoryFile(entry,trip){
+  if(!entry.story){toast("No video on this entry");return;}
+  async function toBlob(ref){
+    if(!ref)return null;
+    if(String(ref).startsWith("idb:")){
+      try{return await mediaGet(String(ref).slice(4));}catch(e){return null;}
+    }
+    if(String(ref).startsWith("data:")){
+      try{
+        var parts=String(ref).split(",");
+        var m=(parts[0].match(/:(.*?);/)||[])[1]||"video/webm";
+        var bin=atob(parts[1]);var a=new Uint8Array(bin.length);
+        for(var i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);
+        return new Blob([a],{type:m});
+      }catch(e){return null;}
+    }
+    try{return await(await fetch(ref)).blob();}catch(e){return null;}
+  }
+  try{
+    var blob=await toBlob(entry.story);
+    if(!blob||!blob.size){toast("Video missing — record again");return;}
+    // Optional watermark — never block share more than 4s
+    try{
+      if(typeof watermarkExistingBlob==="function"){
+        toast("Preparing share…");
+        blob=await Promise.race([
+          watermarkExistingBlob(blob),
+          new Promise(function(res){setTimeout(function(){res(blob);},4000);})
+        ])||blob;
+      }
+    }catch(e){}
+    var mime=blob.type||"video/mp4";
+    if(!mime||mime==="application/octet-stream")mime="video/mp4";
+    var ext=(mime.indexOf("webm")>=0)?"webm":"mp4";
+    var file=new File([blob],"Wikilogs-"+(entry.title||"clip").toString().replace(/[^\w\-]+/g,"_").slice(0,20)+"."+ext,{type:mime,lastModified:Date.now()});
+    var text=[
+      entry.title||"Travel moment",
+      entry.place?("📍 "+entry.place):"",
+      entry.date||"",
+      "",
+      "Filmed with Wikilog's — any journey, one book",
+      "#Wikilogs"
+    ].filter(Boolean).join("\n");
+    // Try system share
+    if(navigator.share){
+      try{
+        if(navigator.canShare&&navigator.canShare({files:[file]})){
+          await navigator.share({files:[file],title:"Wikilog's",text:text});
+          toast("Shared");
+          return;
+        }
+      }catch(e){if(e&&e.name==="AbortError")return;}
+      try{
+        await navigator.share({title:"Wikilog's",text:text});
+      }catch(e){if(e&&e.name==="AbortError")return;}
+    }
+    // Always allow save
+    var a=document.createElement("a");
+    a.href=URL.createObjectURL(blob);
+    a.download=file.name;
+    document.body.appendChild(a);a.click();a.remove();
+    try{await navigator.clipboard.writeText(text);}catch(e){}
+    toast("Video saved — open Instagram/TikTok and upload it");
+  }catch(e){
+    console.error(e);
+    toast("Share failed — try again");
+  }
+}
+async function share(title,text){
+  const branded=text+"\n\n— Wikilog's · any journey, one book";
+  if(navigator.share){try{await navigator.share({title,text:branded});toast("Shared");}catch(e){}}
+  else{try{await navigator.clipboard.writeText(branded);toast("Copied");}catch(e){toast("Can't share");}}
+}
+let _storyRecorder=null,_storyChunks=[],_storyStream=null;
+
+function drawWikilogsWatermark(ctx,w,h){
+  const pad=Math.max(12,Math.round(w*0.03));
+  const label="Wikilog's";
+  const sub="any journey, one book";
+  ctx.save();
+  ctx.font="600 "+Math.max(14,Math.round(w*0.045))+"px DM Sans,system-ui,sans-serif";
+  const tw=ctx.measureText(label).width;
+  ctx.font="500 "+Math.max(10,Math.round(w*0.028))+"px DM Sans,system-ui,sans-serif";
+  const sw=ctx.measureText(sub).width;
+  const boxW=Math.max(tw,sw)+pad*1.6;
+  const boxH=Math.max(36,Math.round(h*0.08));
+  const x=w-boxW-pad, y=h-boxH-pad;
+  ctx.fillStyle="rgba(20,20,20,0.72)";
+  ctx.fillRect(x,y,boxW,boxH);
+  ctx.fillStyle="#fffcf7";
+  ctx.font="600 "+Math.max(14,Math.round(w*0.045))+"px DM Sans,system-ui,sans-serif";
+  ctx.fillText(label, x+pad*0.7, y+boxH*0.48);
+  ctx.font="500 "+Math.max(10,Math.round(w*0.028))+"px DM Sans,system-ui,sans-serif";
+  ctx.globalAlpha=0.9;
+  ctx.fillText(sub, x+pad*0.7, y+boxH*0.82);
+  ctx.restore();
+}
+let _wmRaf=0,_wmVideo=null,_wmCanvas=null,_wmCanvasStream=null,_wmAudioCtx=null,_wmAudioDest=null,_wmAudioSource=null;
+function stopWmPipeline(){
+  if(_wmRaf){cancelAnimationFrame(_wmRaf);_wmRaf=0;}
+  try{if(_wmAudioSource){_wmAudioSource.disconnect();_wmAudioSource=null;}}catch(e){}
+  // do not stop canvas stream tracks here if recorder still needs them — caller handles
+  _wmVideo=null;
+}
+function hardStopWmPipeline(){
+  stopWmPipeline();
+  if(_wmCanvasStream){
+    try{_wmCanvasStream.getTracks().forEach(function(t){t.stop();});}catch(e){}
+    _wmCanvasStream=null;
+  }
+  _wmCanvas=null;
+  try{if(_wmAudioCtx){_wmAudioCtx.close();}}catch(e){}
+  _wmAudioCtx=null;_wmAudioDest=null;
+}
+function startWmPipeline(cameraStream,previewEl){
+  hardStopWmPipeline();
+  const v=document.createElement("video");
+  v.srcObject=cameraStream;v.muted=true;v.playsInline=true;v.play().catch(function(){});
+  const c=document.createElement("canvas");
+  const ctx=c.getContext("2d");
+  _wmVideo=v;_wmCanvas=c;
+  function frame(){
+    if(!_wmVideo)return;
+    const vw=_wmVideo.videoWidth||1280, vh=_wmVideo.videoHeight||720;
+    if(vw&&vh){
+      if(c.width!==vw){c.width=vw;c.height=vh;}
+      try{
+        ctx.drawImage(_wmVideo,0,0,c.width,c.height);
+        drawWikilogsWatermark(ctx,c.width,c.height);
+      }catch(e){}
+    }
+    _wmRaf=requestAnimationFrame(frame);
+  }
+  _wmRaf=requestAnimationFrame(frame);
+  if(previewEl){
+    previewEl.srcObject=cameraStream;
+    previewEl.muted=true;previewEl.playsInline=true;
+    previewEl.classList.remove("hidden");
+    previewEl.controls=false;
+    previewEl.play().catch(function(){});
+  }
+  const fps=24;
+  _wmCanvasStream=c.captureStream(fps);
+  // Prefer WebAudio so we can switch mic without breaking MediaRecorder
+  try{
+    _wmAudioCtx=new (window.AudioContext||window.webkitAudioContext)();
+    _wmAudioDest=_wmAudioCtx.createMediaStreamDestination();
+    _wmAudioSource=_wmAudioCtx.createMediaStreamSource(cameraStream);
+    _wmAudioSource.connect(_wmAudioDest);
+    _wmAudioDest.stream.getAudioTracks().forEach(function(t){_wmCanvasStream.addTrack(t);});
+  }catch(e){
+    try{cameraStream.getAudioTracks().forEach(function(t){_wmCanvasStream.addTrack(t);});}catch(e2){}
+  }
+  return _wmCanvasStream;
+}
+async function swapCameraSource(cameraStream,previewEl){
+  if(!_wmVideo||!_wmCanvas){
+    return startWmPipeline(cameraStream,previewEl);
+  }
+  // Attach new camera off-DOM first so we don't flash black
+  var probe=document.createElement("video");
+  probe.muted=true;probe.playsInline=true;probe.srcObject=cameraStream;
+  try{await probe.play();}catch(e){}
+  await waitVideoReady(probe,2000);
+  _wmVideo.srcObject=cameraStream;
+  _wmVideo.muted=true;_wmVideo.playsInline=true;
+  try{await _wmVideo.play();}catch(e){}
+  await waitVideoReady(_wmVideo,1500);
+  if(previewEl){
+    previewEl.srcObject=cameraStream;
+    previewEl.muted=true;previewEl.playsInline=true;
+    previewEl.classList.remove("hidden");
+    previewEl.controls=false;
+    try{await previewEl.play();}catch(e){}
+  }
+  try{
+    if(_wmAudioCtx&&_wmAudioDest){
+      if(_wmAudioSource){try{_wmAudioSource.disconnect();}catch(e){}}
+      _wmAudioSource=_wmAudioCtx.createMediaStreamSource(cameraStream);
+      _wmAudioSource.connect(_wmAudioDest);
+    }
+  }catch(e){}
+  try{probe.pause();probe.srcObject=null;}catch(e){}
+  return _wmCanvasStream;
+}
+async function watermarkExistingBlob(blob){
+  // Re-encode with watermark for share (may take a few seconds)
+  return new Promise(async function(resolve){
+    try{
+      const url=URL.createObjectURL(blob);
+      const v=document.createElement("video");
+      v.muted=true;v.playsInline=true;v.src=url;
+      await new Promise(function(res,rej){v.onloadeddata=res;v.onerror=rej;});
+      const w=v.videoWidth||1280,h=v.videoHeight||720;
+      const c=document.createElement("canvas");c.width=w;c.height=h;
+      const ctx=c.getContext("2d");
+      const outStream=c.captureStream(30);
+      try{const audioCtx=new(window.AudioContext||window.webkitAudioContext)();const src=audioCtx.createMediaElementSource(v);const dest=audioCtx.createMediaStreamDestination();src.connect(dest);src.connect(audioCtx.destination);dest.stream.getAudioTracks().forEach(function(t){outStream.addTrack(t);});}catch(e){}
+      const mime=(MediaRecorder.isTypeSupported("video/webm;codecs=vp9")&&"video/webm;codecs=vp9")||(MediaRecorder.isTypeSupported("video/webm")&&"video/webm")||"";
+      const rec=mime?new MediaRecorder(outStream,{mimeType:mime}):new MediaRecorder(outStream);
+      const chunks=[];
+      rec.ondataavailable=function(e){if(e.data&&e.data.size)chunks.push(e.data);};
+      rec.onstop=function(){URL.revokeObjectURL(url);resolve(new Blob(chunks,{type:rec.mimeType||"video/webm"}));};
+      rec.start(200);
+      v.currentTime=0;
+      await v.play();
+      function draw(){
+        if(v.ended||v.paused&&v.currentTime>0&&v.currentTime>=v.duration-0.05){try{rec.stop();}catch(e){}return;}
+        ctx.drawImage(v,0,0,w,h);
+        drawWikilogsWatermark(ctx,w,h);
+        requestAnimationFrame(draw);
+      }
+      draw();
+      v.onended=function(){try{rec.stop();}catch(e){}};
+      // safety timeout 3.5 min
+      setTimeout(function(){try{rec.state==="recording"&&rec.stop();}catch(e){}},210000);
+    }catch(e){console.error(e);resolve(blob);}
+  });
+}
+
+let _storyFacing="environment";
+window._camListIndex=0;
+
+let _camDevices={back:null,front:null,list:[]},_camDeviceId=null;
+function isFrontLabel(label){
+  label=(label||"").toLowerCase();
+  return /front|user|face|selfie|facing\s*front/.test(label);
+}
+function isBackLabel(label){
+  label=(label||"").toLowerCase();
+  return /back|rear|environment|world|facing\s*back|facing\s*rear/.test(label);
+}
+async function refreshCamDevices(){
+  try{
+    // Labels often empty until permission granted once
+    let devices=await navigator.mediaDevices.enumerateDevices();
+    let videos=devices.filter(function(d){return d.kind==="videoinput";});
+    if(!videos.length){
+      const tmp=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+      tmp.getTracks().forEach(function(t){t.stop();});
+      devices=await navigator.mediaDevices.enumerateDevices();
+      videos=devices.filter(function(d){return d.kind==="videoinput";});
+    }
+    _camDevices.list=videos;
+    _camDevices.front=null;_camDevices.back=null;
+    videos.forEach(function(d){
+      if(!_camDevices.front&&isFrontLabel(d.label))_camDevices.front=d.deviceId;
+      if(!_camDevices.back&&isBackLabel(d.label))_camDevices.back=d.deviceId;
+    });
+    // Fallback: first = back, second = front (common on Android)
+    if(!_camDevices.back&&videos[0])_camDevices.back=videos[0].deviceId;
+    if(!_camDevices.front&&videos[1])_camDevices.front=videos[1].deviceId;
+    if(!_camDevices.front&&videos[0])_camDevices.front=videos[0].deviceId;
+    return _camDevices;
+  }catch(e){
+    console.error(e);
+    return _camDevices;
+  }
+}
+function currentFacingIdeal(){return _storyFacing==="user"?"user":"environment";}
+async function getCameraStream(wantFacing, withAudio){
+  wantFacing=wantFacing||_storyFacing||"environment";
+  _storyFacing=wantFacing;
+  await refreshCamDevices();
+  var preferId=wantFacing==="user"?_camDevices.front:_camDevices.back;
+  if(_camDevices.front&&_camDevices.front===_camDevices.back&&_camDevices.list.length>1){
+    preferId=wantFacing==="user"?(_camDevices.list[1]&&_camDevices.list[1].deviceId):(_camDevices.list[0]&&_camDevices.list[0].deviceId);
+  }
+  // Lighter constraints = much faster open on Android
+  var tries=[];
+  if(preferId){
+    tries.push({video:{deviceId:{exact:preferId},width:{ideal:720},height:{ideal:1280}},audio:!!withAudio});
+    tries.push({video:{deviceId:{exact:preferId}},audio:!!withAudio});
+  }
+  tries.push({video:{facingMode:{ideal:wantFacing==="user"?"user":"environment"},width:{ideal:720},height:{ideal:1280}},audio:!!withAudio});
+  tries.push({video:{facingMode:wantFacing==="user"?"user":"environment"},audio:!!withAudio});
+  tries.push({video:true,audio:!!withAudio});
+  var lastErr=null;
+  for(var ti=0;ti<tries.length;ti++){
+    try{
+      var stream=await navigator.mediaDevices.getUserMedia(tries[ti]);
+      var vtrack=stream.getVideoTracks()[0];
+      if(vtrack){
+        _camDeviceId=(vtrack.getSettings&&vtrack.getSettings().deviceId)||preferId;
+        var f=vtrack.getSettings&&vtrack.getSettings().facingMode;
+        if(f==="user"||f==="environment")_storyFacing=f;
+      }
+      return stream;
+    }catch(e){lastErr=e;}
+  }
+  throw lastErr||new Error("No camera");
+}
+function waitVideoReady(video,timeoutMs){
+  return new Promise(function(resolve){
+    var done=false;
+    function ok(){if(done)return;done=true;resolve(true);}
+    function fail(){if(done)return;done=true;resolve(false);}
+    if(!video){fail();return;}
+    if(video.videoWidth>0){ok();return;}
+    video.onloadedmetadata=ok;
+    video.onplaying=ok;
+    setTimeout(fail,timeoutMs||2500);
+  });
+}
+async function openCameraPreview(previewEl,statusEl){
+  try{
+    if(_storyRecorder&&_storyRecorder.state==="recording")return false;
+    if(_storyStream){_storyStream.getTracks().forEach(function(t){t.stop();});_storyStream=null;}
+    hardStopWmPipeline();
+    _storyStream=await getCameraStream(_storyFacing,false);
+    if(previewEl){
+      previewEl.srcObject=_storyStream;
+      previewEl.muted=true;previewEl.playsInline=true;
+      previewEl.classList.remove("hidden");
+      previewEl.controls=false;
+      await previewEl.play().catch(function(){});
+    }
+    if(statusEl)statusEl.textContent=(_storyFacing==="user"?"Front":"Back")+" camera — press Record";
+    var fl=document.getElementById("camFacingLbl");
+    if(fl)fl.textContent=_storyFacing==="user"?"Front":"Back";
+    return true;
+  }catch(e){
+    console.error(e);
+    toast("Camera unavailable");
+    return false;
+  }
+}
+async function switchStoryCamera(previewEl,statusEl){
+  var wasRecording=_storyRecorder&&_storyRecorder.state==="recording";
+  var hint=document.getElementById("camHint");
+  var fl=document.getElementById("camFacingLbl");
+  function setMsg(t){
+    if(statusEl)statusEl.textContent=t;
+    if(hint)hint.textContent=t;
+  }
+  try{
+    setMsg("Switching camera…");
+    // ANDROID: only one camera at a time — must fully stop old stream FIRST
+    var resumeRecording=wasRecording;
+    if(wasRecording){
+      try{
+        if(window._storyTimer)clearTimeout(window._storyTimer);
+        if(window._storyTick)clearInterval(window._storyTick);
+      }catch(e){}
+      try{
+        if(_storyRecorder&&_storyRecorder.state==="recording"){
+          await new Promise(function(res){
+            var done=false;
+            _storyRecorder.onstop=function(){if(!done){done=true;res();}};
+            try{_storyRecorder.requestData();}catch(e){}
+            try{_storyRecorder.stop();}catch(e){if(!done){done=true;res();}}
+            setTimeout(function(){if(!done){done=true;res();}},800);
+          });
+        }
+      }catch(e){}
+      _storyRecorder=null;
+      // keep chunks? can't merge easily — start fresh segment after flip
+      _storyChunks=[];
+      window._pendingStoryBlob=null;
+    }
+    hardStopWmPipeline();
+    if(_storyStream){
+      try{_storyStream.getTracks().forEach(function(t){try{t.stop();}catch(e){}});}catch(e){}
+      _storyStream=null;
+    }
+    if(previewEl){try{previewEl.srcObject=null;}catch(e){}}
+    // Let Android release the hardware
+    await new Promise(function(r){setTimeout(r,350);});
+
+    await refreshCamDevices();
+    var list=_camDevices.list||[];
+    if(list.length<2){
+      try{
+        var warm=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+        warm.getTracks().forEach(function(t){t.stop();});
+        await new Promise(function(r){setTimeout(r,300);});
+        await refreshCamDevices();
+        list=_camDevices.list||[];
+      }catch(e){}
+    }
+
+    var nextFacing=_storyFacing==="environment"?"user":"environment";
+    var newStream=null;
+    var lastErr=null;
+
+    // 1) Prefer opposite deviceId from list
+    if(list.length>=2){
+      var preferId=nextFacing==="user"?(_camDevices.front||list[1].deviceId):(_camDevices.back||list[0].deviceId);
+      // If front/back unresolved, pick the other index from current preference
+      if(!preferId||(_camDevices.front===_camDevices.back)){
+        preferId=list[nextFacing==="user"?Math.min(1,list.length-1):0].deviceId;
+      }
+      try{
+        newStream=await navigator.mediaDevices.getUserMedia({
+          video:{deviceId:{exact:preferId}},
+          audio:!!resumeRecording
+        });
+      }catch(e){lastErr=e;}
+    }
+
+    // 2) facingMode exact / ideal
+    if(!newStream){
+      try{
+        newStream=await navigator.mediaDevices.getUserMedia({
+          video:{facingMode:{exact:nextFacing}},
+          audio:!!resumeRecording
+        });
+      }catch(e){lastErr=e;}
+    }
+    if(!newStream){
+      try{
+        newStream=await navigator.mediaDevices.getUserMedia({
+          video:{facingMode:nextFacing},
+          audio:!!resumeRecording
+        });
+      }catch(e){lastErr=e;}
+    }
+
+    // 3) Cycle every deviceId until one works and differs
+    if(!newStream&&list.length){
+      for(var i=0;i<list.length;i++){
+        try{
+          newStream=await navigator.mediaDevices.getUserMedia({
+            video:{deviceId:{exact:list[i].deviceId}},
+            audio:!!resumeRecording
+          });
+          break;
+        }catch(e){lastErr=e;}
+      }
+    }
+
+    if(!newStream){
+      console.error(lastErr);
+      toast("Could not open other camera");
+      setMsg("Flip failed");
+      // try restore any camera
+      try{
+        _storyStream=await navigator.mediaDevices.getUserMedia({video:true,audio:false});
+        if(previewEl){previewEl.srcObject=_storyStream;await previewEl.play().catch(function(){});}
+        setMsg("Camera restored");
+      }catch(e2){}
+      return;
+    }
+
+    _storyFacing=nextFacing;
+    _storyStream=newStream;
+    if(previewEl){
+      previewEl.srcObject=newStream;
+      previewEl.muted=true;
+      previewEl.playsInline=true;
+      previewEl.setAttribute("playsinline","");
+      try{await previewEl.play();}catch(e){}
+    }
+    var name=_storyFacing==="user"?"Front":"Back";
+    if(fl)fl.textContent=name;
+    setMsg(name+" camera");
+    toast(name+" camera");
+
+    if(resumeRecording){
+      // Auto-restart recording on the new camera so user isn't stuck
+      try{
+        await startStoryRec(previewEl,statusEl,_storyFacing);
+        setMsg("Recording "+name+"…");
+        toast("Recording on "+name+" camera");
+        // sync shutter UI if full-screen camera open
+        var shutter=document.getElementById("camShutter");
+        if(shutter)shutter.classList.add("rec");
+        _camRecording=true;
+      }catch(e){
+        toast("Camera flipped — press Record again");
+        setMsg(name+" — press Record");
+      }
+    }
+  }catch(e){
+    console.error("flip fatal",e);
+    toast("Flip failed");
+    setMsg("Flip failed");
+  }
+}
+async function startStoryRec(previewEl,statusEl,facing){
+  try{
+    if(facing) _storyFacing=facing;
+    if(_storyRecorder&&_storyRecorder.state!=="inactive"){
+      try{_storyRecorder.stop();}catch(e){}
+    }
+    hardStopWmPipeline();
+    if(_storyStream){
+      try{_storyStream.getTracks().forEach(function(t){t.stop();});}catch(e){}
+      _storyStream=null;
+    }
+    try{if(window._storyTimer)clearTimeout(window._storyTimer);if(window._storyTick)clearInterval(window._storyTick);}catch(e){}
+    _storyStream=await getCameraStream(_storyFacing, true);
+    // Record directly from camera (reliable on Android). Watermark shows as on-screen badge + share caption.
+    var recordStream=_storyStream;
+    if(previewEl){
+      previewEl.srcObject=_storyStream;
+      previewEl.muted=true;previewEl.playsInline=true;
+      previewEl.classList.remove("hidden");
+      previewEl.controls=false;
+      try{await previewEl.play();}catch(e){}
+    }
+    _storyChunks=[];
+    var cands=["video/webm;codecs=vp9","video/webm;codecs=vp8","video/webm","video/mp4"];
+    var mime="";
+    for(var ci=0;ci<cands.length;ci++){
+      try{if(MediaRecorder.isTypeSupported(cands[ci])){mime=cands[ci];break;}}catch(e){}
+    }
+    try{
+      _storyRecorder=mime?new MediaRecorder(recordStream,{mimeType:mime,videoBitsPerSecond:1600000}):new MediaRecorder(recordStream);
+    }catch(e){
+      _storyRecorder=new MediaRecorder(recordStream);
+    }
+    _storyMime=_storyRecorder.mimeType||mime||"video/webm";
+    _storyRecorder.ondataavailable=function(e){if(e.data&&e.data.size)_storyChunks.push(e.data);};
+    _storyRecorder.start(250);
+    var camLabel=_storyFacing==="user"?"Front":"Back";
+    var left=180;
+    if(statusEl)statusEl.textContent="Recording "+camLabel+"… "+left+"s left";
+    window._storyTick=setInterval(function(){
+      left--;
+      if(left>=0&&statusEl)statusEl.textContent="Recording "+camLabel+"… "+left+"s left";
+    },1000);
+    window._storyTimer=setTimeout(function(){stopStoryRec(previewEl,statusEl);},180000);
+  }catch(e){
+    console.error(e);
+    toast("Camera permission needed");
+    if(statusEl)statusEl.textContent="Camera blocked";
+    throw e;
+  }
+}
+
+let _camResolve=null,_camRecording=false,_camSeconds=0,_camTick=null;
+function fmtCamTime(sec){
+  var m=Math.floor(sec/60),s=sec%60;
+  return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;
+}
+function closePhoneCamera(){
+  try{if(_camTick)clearInterval(_camTick);}catch(e){}
+  _camTick=null;_camRecording=false;_camSeconds=0;
+  var ov=document.getElementById("camOverlay");
+  if(ov){ov.classList.add("hidden");ov.setAttribute("aria-hidden","true");}
+  var v=document.getElementById("camVideo");
+  if(v){try{v.srcObject=null;}catch(e){}}
+}
+function openPhoneCamera(){
+  return new Promise(function(resolve){
+    _camResolve=resolve;
+    var ov=document.getElementById("camOverlay");
+    var video=document.getElementById("camVideo");
+    var timer=document.getElementById("camTimer");
+    var shutter=document.getElementById("camShutter");
+    var hint=document.getElementById("camHint");
+    var facingLbl=document.getElementById("camFacingLbl");
+    if(!ov||!video){resolve(null);return;}
+
+    window._pendingStoryBlob=null;
+    _camRecording=false;_camSeconds=0;
+    if(timer)timer.textContent="00:00";
+    if(shutter)shutter.classList.remove("rec");
+    if(hint)hint.textContent="Flip · Record · max 3 min";
+    if(facingLbl)facingLbl.textContent=_storyFacing==="user"?"Front":"Back";
+    ov.classList.remove("hidden");
+    ov.setAttribute("aria-hidden","false");
+
+    // Open camera preview — simple + reliable
+    (async function(){
+      try{
+        if(_storyStream){try{_storyStream.getTracks().forEach(function(t){t.stop();});}catch(e){}_storyStream=null;}
+        hardStopWmPipeline();
+        // Simplest path first for open reliability
+        try{
+          _storyStream=await getCameraStream(_storyFacing,false);
+        }catch(e1){
+          _storyStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});
+          _storyFacing="environment";
+        }
+        video.srcObject=_storyStream;
+        video.muted=true;
+        video.playsInline=true;
+        video.setAttribute("playsinline","");
+        video.setAttribute("webkit-playsinline","");
+        try{await video.play();}catch(e){}
+        if(hint)hint.textContent=(_storyFacing==="user"?"Front":"Back")+" ready";
+        if(facingLbl)facingLbl.textContent=_storyFacing==="user"?"Front":"Back";
+      }catch(e){
+        console.error(e);
+        toast("Camera blocked — allow permission");
+        if(hint)hint.textContent="Camera blocked";
+      }
+    })();
+
+    async function onFlip(){
+      try{
+        await switchStoryCamera(video,hint);
+        if(facingLbl)facingLbl.textContent=_storyFacing==="user"?"Front":"Back";
+      }catch(e){toast("Flip failed");}
+    }
+    async function onShutter(){
+      if(!_camRecording){
+        window._pendingStoryBlob=null;
+        _storyChunks=[];
+        try{
+          await startStoryRec(video,hint,_storyFacing);
+        }catch(e){toast("Could not record");return;}
+        _camRecording=true;
+        if(shutter)shutter.classList.add("rec");
+        _camSeconds=0;
+        if(timer)timer.textContent="00:00";
+        if(_camTick)clearInterval(_camTick);
+        _camTick=setInterval(function(){
+          _camSeconds++;
+          if(timer)timer.textContent=fmtCamTime(_camSeconds);
+          if(_camSeconds>=180) onShutter();
+        },1000);
+        if(hint)hint.textContent="Recording… tap to stop";
+      }else{
+        if(_camTick){clearInterval(_camTick);_camTick=null;}
+        _camRecording=false;
+        if(shutter)shutter.classList.remove("rec");
+        var blob=null;
+        try{blob=await stopStoryRec(video,hint);}catch(e){}
+        if(blob){
+          window._pendingStoryBlob=blob;
+          if(hint)hint.textContent="Saved";
+          var r=_camResolve;_camResolve=null;
+          setTimeout(function(){
+            closePhoneCamera();
+            if(r)r(blob);
+          },250);
+        }else{
+          if(hint)hint.textContent="No clip — try again";
+        }
+      }
+    }
+    function onClose(){
+      if(_camRecording){
+        try{stopStoryRec(video,hint);}catch(e){}
+      }
+      var r=_camResolve;_camResolve=null;
+      closePhoneCamera();
+      hardStopWmPipeline();
+      if(_storyStream){try{_storyStream.getTracks().forEach(function(t){t.stop();});}catch(e){}_storyStream=null;}
+      if(r)r(window._pendingStoryBlob||null);
+    }
+    function onPick(){
+      var f=document.getElementById("camFile");
+      if(f)f.click();
+    }
+    function onFile(e){
+      var f=e.target.files&&e.target.files[0];
+      if(!f)return;
+      if(f.size>80e6){toast("Video too large");return;}
+      window._pendingStoryBlob=f;
+      var r=_camResolve;_camResolve=null;
+      closePhoneCamera();
+      if(r)r(f);
+    }
+
+    document.getElementById("camFlipBtn").onclick=onFlip;
+    document.getElementById("camShutter").onclick=onShutter;
+    document.getElementById("camClose").onclick=onClose;
+    document.getElementById("camPickBtn").onclick=onPick;
+    var fl=document.getElementById("camFacingLbl");
+    if(fl)fl.onclick=onFlip;
+    var file=document.getElementById("camFile");
+    if(file)file.onchange=onFile;
+  });
+}
+
+function stopStoryRec(previewEl,statusEl){
+  return new Promise(function(res){
+    try{if(window._storyTimer)clearTimeout(window._storyTimer);if(window._storyTick)clearInterval(window._storyTick);}catch(e){}
+    if(!_storyRecorder||_storyRecorder.state==="inactive"){res(window._pendingStoryBlob||null);return;}
+    _storyRecorder.onstop=function(){
+      var type=_storyMime||(_storyChunks[0]&&_storyChunks[0].type)||"video/webm";
+      var blob=new Blob(_storyChunks,{type:type});
+      hardStopWmPipeline();
+      if(_storyStream){_storyStream.getTracks().forEach(function(t){t.stop();});_storyStream=null;}
+      previewEl.srcObject=null;
+      if(blob.size){
+        previewEl.src=URL.createObjectURL(blob);
+        previewEl.muted=false;previewEl.controls=true;
+        window._pendingStoryBlob=blob;
+        if(statusEl)statusEl.textContent="Ready ("+(blob.size/1e6).toFixed(1)+" MB) · "+(_storyFacing==="user"?"Front":"Back");
+      }else if(statusEl)statusEl.textContent="No video captured";
+      res(blob.size?blob:null);
+    };
+    try{_storyRecorder.requestData();}catch(e){}
+    try{_storyRecorder.stop();}catch(e){res(null);}
+  });
+}
+
+function initMap(t){
+  const el=document.getElementById("map");if(!el||!window.L)return;
+  if(S.map){try{S.map.remove();}catch(e){}S.map=null;}
+  const pts=[];(t.destinations||[]).forEach(d=>{if(d.lat!=null)pts.push([d.lat,d.lng]);});
+  (t.trail||[]).forEach(p=>pts.push([p.lat,p.lng]));
+  S.map=L.map(el).setView(pts[0]||[-22.5,17],6);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OSM"}).addTo(S.map);
+  (t.destinations||[]).forEach(d=>{if(d.lat!=null)L.marker([d.lat,d.lng]).addTo(S.map).bindPopup(esc(d.name));});
+  if((t.trail||[]).length>1)L.polyline(t.trail.map(p=>[p.lat,p.lng]),{color:"#2c4a3e",weight:3}).addTo(S.map);
+  if(pts.length>1)S.map.fitBounds(pts,{padding:[40,40]});
+  setTimeout(()=>S.map&&S.map.invalidateSize(),250);
+}
+
+function bind(){
+  document.querySelectorAll("[data-go]").forEach(b=>b.onclick=()=>{
+    if(b.dataset.go==="trip-or-home"){if(S.tripId){S.screen="trip";}else S.screen="home";}
+    else{S.screen=b.dataset.go;if(b.dataset.go!=="trip")S.tripId=null;}
+    if(S.map){try{S.map.remove();}catch(e){}S.map=null;}render();
+  });
+  document.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{S.tripId=b.dataset.open;S.screen="trip";S.tab=(T()?.viewMode==="map")?"map":"story";render();});
+  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render();});
+  document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>patch(t=>{t.viewMode=b.dataset.mode;S.tab=b.dataset.mode==="map"?"map":"story";}));
+  document.getElementById("fab").onclick=()=>{if(!T()){toast("Open a trip first");return;}S.tab="log";render();setTimeout(()=>document.getElementById("addDay")?.click(),50);};
+
+  document.getElementById("btnNew")?.addEventListener("click",()=>modal("New trip",`<div class="field"><label>Name</label><input id="mN"/></div>
+  <div class="row"><div class="field" style="flex:1"><label>Start</label><input type="date" id="mS"/></div>
+  <div class="field" style="flex:1"><label>End</label><input type="date" id="mE"/></div></div>
+  <div class="field"><label>Packing</label><select id="mP"><option value="">Empty</option>${S.lists.map(L=>`<option value="${L.id}">${esc(L.name)}</option>`).join("")}</select></div>`,()=>{
+    const list=S.lists.find(L=>L.id===document.getElementById("mP").value);
+    const nt={id:uid("t"),name:document.getElementById("mN").value.trim()||"Untitled",startDate:document.getElementById("mS").value,endDate:document.getElementById("mE").value,
+      summary:"",currency:"USD",budget:0,cover:null,bookLayout:"balanced",viewMode:"magazine",destinations:[],legs:[],bookings:[],docs:[],trail:[],storyline:[],
+      pretrip:PRE.map(x=>({id:uid("pt"),name:x.n,done:false})),packing:list?list.items.map(i=>({id:uid("p"),cat:i.cat,name:i.name,done:false})):[],packingName:list?list.name:"Empty",days:[],expenses:[],createdAt:new Date().toISOString()};
+    S.trips.unshift(nt);save();S.tripId=nt.id;S.screen="trip";S.tab="story";render();toast("Created");
+  }));
+  document.getElementById("btnExport")?.addEventListener("click",()=>{
+    const blob=new Blob([JSON.stringify({trips:S.trips,lists:S.lists,ver:VER},null,2)],{type:"application/json"});
+    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`wikilogs-${VER}.json`;a.click();
+  });
+  const imp=document.getElementById("importFile");
+  document.getElementById("btnImport")?.addEventListener("click",()=>imp?.click());
+  if(imp)imp.onchange=()=>{const f=imp.files[0];imp.value="";if(!f)return;const r=new FileReader();r.onload=()=>{try{const p=JSON.parse(r.result);const trips=p.trips||[];if(!confirm(`Import ${trips.length}?`))return;const m=new Map(S.trips.map(t=>[t.id,t]));trips.forEach(t=>m.set(t.id,t));S.trips=[...m.values()];if(p.lists?.length)S.lists=p.lists;save();render();toast("Imported");}catch(e){toast("Failed");}};r.readAsText(f);};
+
+  document.getElementById("ovSave")?.addEventListener("click",async()=>{
+    const f=document.getElementById("ovCover")?.files?.[0];let cover=T().cover;if(f)cover=await fileURL(f);
+    patch(t=>{t.name=document.getElementById("ovName").value.trim()||t.name;t.startDate=document.getElementById("ovStart").value;t.endDate=document.getElementById("ovEnd").value;
+      t.currency=document.getElementById("ovCur").value;t.budget=+document.getElementById("ovBud").value||0;t.summary=document.getElementById("ovSum").value;t.cover=cover;t.bookLayout=document.getElementById("ovLayout").value;});
+    toast("Saved");
+  });
+  document.querySelectorAll("[data-pt]").forEach(c=>c.onchange=()=>patch(t=>{const p=t.pretrip.find(x=>x.id===c.dataset.pt);if(p)p.done=c.checked;}));
+  document.getElementById("ptAdd")?.addEventListener("click",()=>{const n=document.getElementById("ptNew").value.trim();if(n)patch(t=>{t.pretrip.push({id:uid("pt"),name:n,done:false});});});
+  document.getElementById("btnDel")?.addEventListener("click",()=>{if(!confirm("Delete?"))return;S.trips=S.trips.filter(x=>x.id!==S.tripId);S.tripId=null;S.screen="home";save();render();});
+  document.getElementById("btnShare")?.addEventListener("click",()=>{const t=T();share(t.name,`${t.name}\n${t.startDate||""} → ${t.endDate||""}\n${(t.destinations||[]).map(d=>d.name).join(" · ")}\n\n${t.summary||""}\n\nWikilog's`);});
+
+  document.getElementById("addDest")?.addEventListener("click",()=>modal("Place",`<div class="field"><label>Name</label><input id="dN"/></div><div class="field"><label>Country</label><input id="dC"/></div>
+  <div class="row"><div class="field" style="flex:1"><label>Lat</label><input id="dLa" type="number" step="any"/></div><div class="field" style="flex:1"><label>Lng</label><input id="dLn" type="number" step="any"/></div></div>
+  <div class="field"><label>Notes</label><textarea id="dNo"></textarea></div>`,()=>patch(t=>t.destinations.push({id:uid("d"),name:document.getElementById("dN").value||"Stop",country:document.getElementById("dC").value,notes:document.getElementById("dNo").value,lat:document.getElementById("dLa").value===""?null:+document.getElementById("dLa").value,lng:document.getElementById("dLn").value===""?null:+document.getElementById("dLn").value}))));
+  document.getElementById("addLeg")?.addEventListener("click",()=>modal("Leg",`<div class="field"><label>Mode</label><select id="lM"><option>flight</option><option>train</option><option>car</option><option>camper</option><option>bus</option><option>ferry</option><option>other</option></select></div>
+  <div class="row"><div class="field" style="flex:1"><label>From</label><input id="lF"/></div><div class="field" style="flex:1"><label>To</label><input id="lT"/></div></div>`,()=>patch(t=>t.legs.push({id:uid("l"),mode:document.getElementById("lM").value,from:document.getElementById("lF").value,to:document.getElementById("lT").value,notes:""}))));
+  document.getElementById("addBook")?.addEventListener("click",()=>modal("Booking",`<div class="field"><label>Type</label><select id="bT"><option>flight</option><option>hotel</option><option>car</option><option>activity</option></select></div>
+  <div class="field"><label>Title</label><input id="bTi"/></div><div class="field"><label>Confirmation</label><input id="bR"/></div>`,()=>patch(t=>{t.bookings=t.bookings||[];t.bookings.push({id:uid("b"),type:document.getElementById("bT").value,title:document.getElementById("bTi").value,ref:document.getElementById("bR").value,date:"",notes:""});})));
+  document.querySelectorAll("[data-del-dest]").forEach(b=>b.onclick=()=>patch(t=>t.destinations=t.destinations.filter(d=>d.id!==b.dataset.delDest)));
+  document.querySelectorAll("[data-del-leg]").forEach(b=>b.onclick=()=>patch(t=>t.legs=t.legs.filter(d=>d.id!==b.dataset.delLeg)));
+  document.querySelectorAll("[data-del-book]").forEach(b=>b.onclick=()=>patch(t=>t.bookings=t.bookings.filter(d=>d.id!==b.dataset.delBook)));
+
+  document.getElementById("btnTrail")?.addEventListener("click",()=>{
+    if(S.watching&&S.watchId){navigator.geolocation.clearWatch(S.watchId);S.watching=false;S.watchId=null;toast("Trail off");render();return;}
+    if(!navigator.geolocation){toast("No GPS");return;}
+    S.watching=true;toast("Trail on");
+    S.watchId=navigator.geolocation.watchPosition(pos=>{
+      const p={lat:pos.coords.latitude,lng:pos.coords.longitude,t:Date.now()};const t=T();if(!t)return;t.trail=t.trail||[];
+      const last=t.trail[t.trail.length-1];if(last&&hav(last,p)<0.03)return;t.trail.push(p);save();
+    },()=>toast("GPS error"),{enableHighAccuracy:true});
+    render();
+  });
+  document.getElementById("btnClearTrail")?.addEventListener("click",()=>{if(confirm("Clear trail?"))patch(t=>t.trail=[]);});
+
+  let pendingStory=null;/* legacy */;
+  const openDay=pre=>{
+    pendingStory=null;
+    modal("Journal",`<div class="row"><div class="field" style="flex:1"><label>Date</label><input type="date" id="jD" value="${new Date().toISOString().slice(0,10)}"/></div>
+  <div class="field" style="flex:1"><label>Time</label><input type="time" id="jT" value="${new Date().toTimeString().slice(0,5)}"/></div></div>
+  <div class="field"><label>Headline</label><input id="jH" value="${esc(pre||"")}"/></div>
+  <div class="field"><label>Place</label><input id="jP"/></div>
+  <div class="field"><label>Notes</label><textarea id="jN"></textarea></div>
+  <div class="field"><label>Photos</label><input type="file" id="jPh" accept="image/*" multiple capture="environment"/></div>
+  <div class="field"><label>Voice</label><input type="file" id="jV" accept="audio/*" capture/></div>
+  <div class="field"><label>Video</label>
+  <button type="button" class="btn btn-soft" id="jStoryStart" style="width:100%">Open camera — record / flip / gallery</button>
+  <p class="meta" id="jStoryStatus">Full-screen camera · max 3 min · Wikilog's watermark</p>
+  <video id="storyPreview" class="hidden" playsinline controls style="width:100%;max-height:180px;margin-top:8px;border-radius:12px;background:#000"></video>
+  <input type="file" id="jStoryFile" accept="video/*" class="hidden"/>
+  </div>`,async()=>{
+    const photos=[];for(const f of Array.from(document.getElementById("jPh").files||[]))photos.push(await fileURL(f));
+    let voice=null;const vf=document.getElementById("jV").files?.[0];if(vf)voice=await fileURL(vf);
+    let story=null;
+    let sblob=window._pendingStoryBlob||pendingStory;
+    const sf=document.getElementById("jStoryFile")?.files?.[0];
+    if((!sblob||!(sblob instanceof Blob))&&sf)sblob=sf;
+    if(sblob&&sblob instanceof Blob){
+      if(sblob.size>80e6){toast("Video too large");return;}
+      const mid=uid("vid");
+      await mediaPut(mid,sblob);
+      story="idb:"+mid;
+    }else if(typeof pendingStory==="string"){story=pendingStory;}
+    let lat=null,lng=null;try{const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:4000}));lat=pos.coords.latitude;lng=pos.coords.longitude;}catch(e){}
+    patch(t=>t.days.push({id:uid("day"),date:document.getElementById("jD").value,time:document.getElementById("jT").value,title:document.getElementById("jH").value,place:document.getElementById("jP").value,notes:document.getElementById("jN").value,photos,voice,story,lat,lng}));
+  });
+    setTimeout(()=>{
+      const prev=document.getElementById("storyPreview"), st=document.getElementById("jStoryStatus");
+      document.getElementById("jStoryStart")?.addEventListener("click",async()=>{
+        const blob=await openPhoneCamera();
+        if(blob){window._pendingStoryBlob=blob;pendingStory=blob;if(prev){prev.src=URL.createObjectURL(blob);prev.classList.remove("hidden");prev.controls=true;}if(st)st.textContent="Clip ready ("+(blob.size/1e6).toFixed(1)+" MB)";}
+      });
+      document.getElementById("jStoryStop")?.addEventListener("click",async()=>{const blob=await stopStoryRec(prev,st);if(blob){pendingStory=blob;window._pendingStoryBlob=blob;}});
+      document.getElementById("jStoryFile")?.addEventListener("change",async e=>{const f=e.target.files?.[0];if(!f)return;if(f.size>80e6){toast("Video too large (max ~80MB)");return;}pendingStory=f;window._pendingStoryBlob=f;prev.src=URL.createObjectURL(f);prev.classList.remove("hidden");prev.controls=true;st.textContent="Clip attached ("+(f.size/1e6).toFixed(1)+" MB)";});
+    },50);
+  };
+  document.getElementById("addDay")?.addEventListener("click",()=>openDay(""));
+  document.querySelectorAll("[data-prompt]").forEach(e=>e.onclick=()=>openDay(e.dataset.prompt));
+  document.querySelectorAll("[data-del-day]").forEach(b=>b.onclick=()=>patch(t=>t.days=t.days.filter(d=>d.id!==b.dataset.delDay)));
+  document.querySelectorAll("[data-share-day]").forEach(b=>b.onclick=()=>{const t=T(),d=t.days.find(x=>x.id===b.dataset.shareDay);if(d)shareBranded(d,t);});
+  document.querySelectorAll("[data-share-story]").forEach(b=>b.onclick=()=>{const t=T(),d=t.days.find(x=>x.id===b.dataset.shareStory);if(d)shareStoryFile(d,t);});
+
+  document.querySelectorAll("[data-pack]").forEach(c=>c.onchange=()=>patch(t=>{const i=t.packing.find(x=>x.id===c.dataset.pack);if(i)i.done=c.checked;}));
+  document.querySelectorAll("[data-del-pack]").forEach(b=>b.onclick=()=>patch(t=>t.packing=t.packing.filter(i=>i.id!==b.dataset.delPack)));
+  document.getElementById("packApply")?.addEventListener("click",()=>{const list=S.lists.find(L=>L.id===document.getElementById("packLoad").value);if(!list)return toast("Pick list");patch(t=>{t.packing=list.items.map(i=>({id:uid("p"),cat:i.cat,name:i.name,done:false}));t.packingName=list.name;});});
+  document.getElementById("packAdd")?.addEventListener("click",()=>{const n=document.getElementById("pn").value.trim();if(!n)return;patch(t=>t.packing.push({id:uid("p"),cat:document.getElementById("pc").value||"General",name:n,done:false}));});
+
+  document.getElementById("addExp")?.addEventListener("click",()=>{const t=T();modal("Expense",`<div class="row"><div class="field" style="flex:1"><label>Amount</label><input type="number" step="0.01" id="eA"/></div>
+  <div class="field" style="flex:1"><label>Currency</label><input id="eC" value="${esc(t.currency)}"/></div></div>
+  <div class="field"><label>Category</label><select id="eCat"><option>Food & drink</option><option>Stay & campsites</option><option>Fuel</option><option>Flights</option><option>Activities</option><option>Shopping</option><option>Other</option></select></div>
+  <div class="field"><label>Vendor</label><input id="eV"/></div><div class="field"><label>Date</label><input type="date" id="eD" value="${new Date().toISOString().slice(0,10)}"/></div>
+  <div class="field"><label><input type="checkbox" id="eS"/> Split</label></div>
+  <div class="field"><label>Receipt</label><input type="file" id="eR" accept="image/*" capture="environment"/></div>`,async()=>{
+    let receipt=null;const f=document.getElementById("eR").files?.[0];if(f)receipt=await fileURL(f);
+    patch(tr=>tr.expenses.push({id:uid("e"),amount:+document.getElementById("eA").value||0,currency:document.getElementById("eC").value,category:document.getElementById("eCat").value,vendor:document.getElementById("eV").value,date:document.getElementById("eD").value,note:"",split:document.getElementById("eS").checked,receipt}));
+  });});
+  document.querySelectorAll("[data-del-exp]").forEach(b=>b.onclick=()=>patch(t=>t.expenses=t.expenses.filter(e=>e.id!==b.dataset.delExp)));
+  document.getElementById("addDoc")?.addEventListener("click",()=>modal("Document",`<div class="field"><label>Title</label><input id="doT"/></div>
+  <div class="field"><label>Kind</label><select id="doK"><option>passport</option><option>visa</option><option>insurance</option><option>booking</option><option>other</option></select></div>
+  <div class="field"><label>File</label><input type="file" id="doF" accept="image/*,application/pdf"/></div>`,async()=>{
+    let data=null;const f=document.getElementById("doF").files?.[0];if(f)data=await fileURL(f);
+    patch(t=>{t.docs=t.docs||[];t.docs.push({id:uid("doc"),title:document.getElementById("doT").value||"Doc",kind:document.getElementById("doK").value,note:"",data});});
+  }));
+  document.querySelectorAll("[data-del-doc]").forEach(b=>b.onclick=()=>patch(t=>t.docs=t.docs.filter(d=>d.id!==b.dataset.delDoc)));
+  
+  document.getElementById("addStoryClip")?.addEventListener("click",()=>{
+    const t=T();if(!t)return;
+    modal("Storyline clip",`<div class="field"><label>Title</label><input id="scTitle" placeholder="Sunset at the dunes"/></div>
+    <div class="field"><label>Place</label><input id="scPlace"/></div>
+    <div class="field"><label>Date</label><input type="date" id="scDate" value="${new Date().toISOString().slice(0,10)}"/></div>
+    <div class="field"><label>Video</label>
+      <button type="button" class="btn btn-soft" id="scRec" style="width:100%">Open camera — record / flip / gallery</button>
+      <p class="meta" id="scStatus">Full-screen camera · max 3 min</p>
+      <video id="storyPreview" class="hidden" playsinline controls style="width:100%;max-height:180px;margin-top:8px;border-radius:12px;background:#000"></video>
+      <input type="file" id="scFile" accept="video/*" class="hidden"/>
+    </div>`,async()=>{
+      let blob=window._pendingStoryBlob;
+      const f=document.getElementById("scFile")?.files?.[0];
+      if(!blob&&f)blob=f;
+      if(!blob){toast("Add a video first");return;}
+      if(blob.size>80e6){toast("Video too large");return;}
+      const mid=uid("vid");
+      await mediaPut(mid, blob instanceof Blob?blob:new Blob([blob],{type:blob.type||"video/mp4"}));
+      patch(tr=>{tr.storyline=tr.storyline||[];tr.storyline.push({id:uid("clip"),media:"idb:"+mid,title:document.getElementById("scTitle").value||"Clip",place:document.getElementById("scPlace").value,date:document.getElementById("scDate").value});});
+      toast("Clip added to storyline");
+    });
+    setTimeout(()=>{
+      const prev=document.getElementById("storyPreview"), st=document.getElementById("scStatus");
+      window._pendingStoryBlob=null;
+      document.getElementById("scRec")?.addEventListener("click",async()=>{
+        const blob=await openPhoneCamera();
+        if(blob){window._pendingStoryBlob=blob;if(prev){prev.src=URL.createObjectURL(blob);prev.classList.remove("hidden");prev.controls=true;}if(st)st.textContent="Clip ready ("+(blob.size/1e6).toFixed(1)+" MB)";}
+      });
+      document.getElementById("scStop")?.addEventListener("click",()=>stopStoryRec(prev,st));
+      document.getElementById("scFile")?.addEventListener("change",e=>{
+        const f=e.target.files?.[0];if(!f)return;
+        if(f.size>80e6){toast("Too large");return;}
+        window._pendingStoryBlob=f;prev.src=URL.createObjectURL(f);prev.classList.remove("hidden");prev.controls=true;st.textContent="Clip ready";
+      });
+    },40);
+  });
+  document.getElementById("playStoryline")?.addEventListener("click",()=>{
+    const vids=[...document.querySelectorAll("#storylineReel video")];
+    if(!vids.length){toast("No clips yet");return;}
+    let i=0;
+    const playNext=()=>{
+      if(i>=vids.length){toast("Storyline finished");return;}
+      vids.forEach((v,j)=>{if(j!==i){try{v.pause();}catch(e){}}});
+      const v=vids[i];
+      v.scrollIntoView({behavior:"smooth",inline:"center",block:"nearest"});
+      const go=()=>{v.play().catch(()=>{});};
+      if(!v.src&&v.getAttribute("data-media"))hydrateVideos(document.getElementById("storylineReel")).then(go);else go();
+      v.onended=()=>{i++;playNext();};
+    };
+    playNext();
+  });
+  document.querySelectorAll("[data-del-clip]").forEach(b=>b.onclick=()=>patch(t=>{t.storyline=(t.storyline||[]).filter(c=>c.id!==b.dataset.delClip);}));
+  document.querySelectorAll("[data-share-clip]").forEach(b=>b.onclick=()=>{
+    const t=T();const c=allStoryClips(t).find(x=>x.id===b.dataset.shareClip);
+    if(c)shareStoryFile({story:c.media,title:c.title,place:c.place,date:c.date,photos:[]},t);
+  });
+
+  document.getElementById("btnPrint")?.addEventListener("click",()=>window.print());
+  if(S.tab==="map"||(T()?.viewMode==="map"&&S.tab==="map"))setTimeout(()=>initMap(T()),80);
+  if(S.tab==="map")setTimeout(()=>initMap(T()),80);
+  setTimeout(()=>{try{if(typeof hydrateVideos==="function")hydrateVideos(document.getElementById("app"));}catch(e){}},40);
+}
+if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
+load();render();
+})();
+</script>
+</body>
+</html>
+<script async src="/.netlify/scripts/hud?variant=public" data-nf-variant="public" data-netlify-site-id="2646e67e-90aa-4438-9ab5-f8582f337968" data-app-host="app.netlify.com"></script>
