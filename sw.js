@@ -1,9 +1,12 @@
-const CACHE = "wikilogs-v3.9.5";
+const VER = "v4.0.0-fluency";
+const CACHE = "wikilogs-v4.0.0-fluency";
 const SHELL = ["./", "./index.html", "./manifest.json", "./sw.js"];
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
-  e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)));
+  e.waitUntil(
+    caches.open(CACHE).then((c) => c.addAll(SHELL)).catch(() => {})
+  );
 });
 
 self.addEventListener("activate", (e) => {
@@ -23,17 +26,20 @@ self.addEventListener("fetch", (e) => {
     url.pathname.endsWith("/sw.js") ||
     url.pathname.endsWith("/manifest.json");
 
+  // Network-first for the app shell so an update never serves a blank stale page.
   if (isShell) {
     e.respondWith(
       fetch(e.request)
         .then((res) => {
-          if (res.ok) {
+          if (res && res.ok) {
             const clone = res.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, clone));
+            caches.open(CACHE).then((c) => c.put(e.request, clone)).catch(() => {});
           }
           return res;
         })
-        .catch(() => caches.match(e.request).then((c) => c || caches.match("./index.html")))
+        .catch(() =>
+          caches.match(e.request).then((c) => c || caches.match("./index.html"))
+        )
     );
     return;
   }
@@ -43,9 +49,9 @@ self.addEventListener("fetch", (e) => {
       if (cached) return cached;
       return fetch(e.request)
         .then((res) => {
-          if (res.ok && url.origin === self.location.origin) {
+          if (res && res.ok && url.origin === self.location.origin) {
             const clone = res.clone();
-            caches.open(CACHE).then((c) => c.put(e.request, clone));
+            caches.open(CACHE).then((c) => c.put(e.request, clone)).catch(() => {});
           }
           return res;
         })

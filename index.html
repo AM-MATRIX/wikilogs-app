@@ -130,12 +130,45 @@ textarea{min-height:100px;resize:vertical}
 .story-badge{font-size:11px;color:var(--warm);font-weight:600}
 #storyPreview{width:100%;max-height:200px;border-radius:12px;margin-top:8px;background:#000}
 
+body{padding-bottom:72px}
+.ver-chip{display:inline-flex;align-items:center;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:10px;font-weight:600;letter-spacing:.03em;vertical-align:middle;margin-left:8px}
+.dock{background:rgba(255,252,247,.78);padding:4px 6px;box-shadow:0 4px 16px rgba(0,0,0,.05);border-radius:18px}
+.dock button{padding:8px 4px;font-size:10px;font-weight:500;letter-spacing:.02em}
+.fab{bottom:78px;width:54px;height:54px;font-size:26px;box-shadow:0 6px 18px rgba(0,0,0,.2)}
+.sheet{background:var(--paper);border-radius:22px 22px 16px 16px;width:100%;max-width:520px;max-height:90vh;overflow:auto;padding:12px 20px 24px}
+.sheet-handle{width:40px;height:4px;border-radius:99px;background:var(--line);margin:4px auto 14px}
+.qc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0 14px}
+.qc-grid button{min-height:88px;border:1px solid var(--line);background:var(--bg);border-radius:16px;cursor:pointer;font-weight:600;font-size:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+.qc-grid button .qc-ico{font-size:26px;line-height:1}
+.mem-card{display:flex;gap:12px;background:var(--paper);border:1px solid var(--line);border-radius:var(--radius);padding:12px;margin:12px 0;align-items:stretch}
+.mem-thumb{width:88px;flex:0 0 88px;border-radius:12px;overflow:hidden;background:linear-gradient(135deg,#2c4a3e,#5a7d6c);min-height:88px}
+.mem-thumb img{width:100%;height:100%;object-fit:cover;min-height:88px;display:block}
+.mem-body{flex:1;min-width:0}
+.mem-body h4{font-family:var(--serif);font-size:1.2rem;font-weight:400;margin-top:2px}
+.one-liner{margin-top:4px;color:var(--muted);font-size:13px;line-height:1.4}
+.tag{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-size:11px;font-weight:600;margin:4px 4px 0 0}
+.tag.warm{background:#f3e4d8;color:var(--warm)}
+.poi-chip{display:inline-flex;align-items:center;gap:4px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:var(--paper);font-size:12px;cursor:pointer}
+.poi-chip.on{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.poi-pin{background:transparent;border:none}
+.poi-pin span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--paper);border:1px solid var(--line);font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+.empty-actions{display:flex;flex-direction:column;gap:8px;align-items:center;margin-top:14px}
+.camp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.rec-dot{width:10px;height:10px;border-radius:50%;background:#e11;display:inline-block;margin-right:6px;animation:pulse 1s infinite}
+@keyframes pulse{50%{opacity:.35}}
+.mode-switch{margin:8px 0 0}
+.mode-switch button{padding:8px;font-size:12px}
+.tabs{margin:10px 0 12px;padding:4px}
+.tab{padding:8px 12px;font-size:12px}
+.hero-cover.slim{min-height:140px}
+.hero-cover.slim .inner{padding:28px 20px 18px}
+.trip-places .meta{margin-top:2px}
 @media print{.top,.dock,.fab,.tabs,.mode-switch,.toast,.modal-bg,.no-print{display:none!important}body{background:#fff;padding:0}.shell{max-width:none}.panel{border:none;box-shadow:none}}
 </style>
 </head>
 <body>
 <div class="shell" id="app"></div>
-<button class="fab no-print" id="fab" title="Quick log">+</button>
+<button class="fab no-print" id="fab" title="Quick capture">+</button>
 <nav class="dock no-print" id="dock"></nav>
 <div id="modalRoot"></div>
 <div id="camOverlay" class="cam-overlay hidden" aria-hidden="true">
@@ -160,7 +193,7 @@ textarea{min-height:100px;resize:vertical}
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 (function(){
-const VER="v3.9.5-flip";
+const VER="v4.0.0-fluency";
 const STORAGE="wikilogs_v3";
 const uid=p=>p+"_"+Math.random().toString(36).slice(2,9);
 const PROMPTS=["Best meal","Hardest moment","Something funny","Tip for next time","Road note","People we met"];
@@ -170,18 +203,53 @@ const TPL=[
 {id:"r",name:"Family road trip",items:[{c:"Kids",n:"Snacks"},{c:"Kids",n:"Entertainment"},{c:"Safety",n:"First aid"},{c:"Docs",n:"Bookings"}]}
 ];
 const PRE=[{n:"Passports valid 6+ months"},{n:"Travel insurance"},{n:"Visas checked"},{n:"Vehicle ready / hire"},{n:"Cash & cards"},{n:"Offline maps"},{n:"Emergency contacts"}];
+const POI=[{id:"camp",label:"Camp",icon:"⛺"},{id:"fuel",label:"Fuel",icon:"⛽"},{id:"water",label:"Water",icon:"💧"},{id:"border",label:"Border",icon:"🛂"},{id:"waterhole",label:"Waterhole",icon:"🐘"},{id:"workshop",label:"Workshop",icon:"🔧"},{id:"viewpoint",label:"Viewpoint",icon:"👁"}];
+function poiMeta(id){return POI.find(p=>p.id===id)||null;}
+function poiLabel(id){const p=poiMeta(id);return p?p.icon+" "+p.label:"";}
+function emptyCamp(){return{water:"",power:"",ablution:"",surface:"",noise:"",price:"",wildlifeRisk:"",braai:""};}
+function blankDay(o){const now=new Date();return Object.assign({id:uid("day"),date:now.toISOString().slice(0,10),time:now.toTimeString().slice(0,5),title:"",place:"",notes:"",photos:[],voice:null,story:null,lat:null,lng:null,campName:"",km:"",fuelNote:"",wildlife:"",kind:"note",poiType:"",campsite:emptyCamp()},o||{});}
+function migrateEntry(d){if(!d||typeof d!=="object")return d;if(!Array.isArray(d.photos))d.photos=[];if(d.campName==null)d.campName="";if(d.km==null)d.km="";if(d.fuelNote==null)d.fuelNote="";if(d.wildlife==null)d.wildlife="";if(!d.kind){if(d.voice&&!d.notes&&!d.photos.length)d.kind="voice";else if(d.photos.length&&!d.notes&&!d.voice)d.kind="photo";else if(d.title==="Check-in"||d.kind==="checkin")d.kind="checkin";else d.kind="note";}if(d.poiType==null)d.poiType="";if(!d.campsite||typeof d.campsite!=="object")d.campsite=emptyCamp();else d.campsite=Object.assign(emptyCamp(),d.campsite);return d;}
+function migratePlace(d){if(!d||typeof d!=="object")return d;if(d.poiType==null)d.poiType="";if(!d.campsite||typeof d.campsite!=="object")d.campsite=emptyCamp();else d.campsite=Object.assign(emptyCamp(),d.campsite);return d;}
+function migrateTrip(t){t.days=(t.days||[]).map(migrateEntry);t.destinations=(t.destinations||[]).map(migratePlace);t.storyline=t.storyline||[];t.trail=t.trail||[];t.expenses=t.expenses||[];return t;}
+function oneLiner(s,n){s=String(s||"").replace(/\s+/g," ").trim();if(!s)return"";const cut=s.split(/(?<=[.!?])\s/)[0]||s;return cut.length>(n||110)?cut.slice(0,n||110).trim()+"…":cut;}
+function daySpend(t,date){return(t.expenses||[]).filter(e=>e.date===date).reduce((s,e)=>s+Number(e.amount||0),0);}
+function campFieldsHTML(c,prefix){c=c||{};const sel=(id,opts,val)=>`<select id="${prefix}${id}">${opts.map(o=>`<option value="${esc(o)}" ${String(val||"")===o?"selected":""}>${o||"—"}</option>`).join("")}</select>`;return `<div class="camp-grid">
+  <div class="field"><label>Water</label>${sel("water",["","yes","no","seasonal"],c.water)}</div>
+  <div class="field"><label>Power</label>${sel("power",["","none","camp","own"],c.power)}</div>
+  <div class="field"><label>Ablution</label>${sel("ablution",["","none","basic","good"],c.ablution)}</div>
+  <div class="field"><label>Surface</label><input id="${prefix}surface" value="${esc(c.surface||"")}" placeholder="sand, gravel…"/></div>
+  <div class="field"><label>Noise</label>${sel("noise",["","quiet","moderate","loud"],c.noise)}</div>
+  <div class="field"><label>Price</label><input id="${prefix}price" value="${esc(c.price||"")}" placeholder="NAD / night"/></div>
+  <div class="field"><label>Wildlife risk</label>${sel("wildlifeRisk",["","low","medium","high"],c.wildlifeRisk)}</div>
+  <div class="field"><label>Braai</label>${sel("braai",["","yes","no"],c.braai)}</div>
+</div>`;}
+function readCamp(prefix){const g=id=>(document.getElementById(prefix+id)||{}).value||"";return{water:g("water"),power:g("power"),ablution:g("ablution"),surface:g("surface"),noise:g("noise"),price:g("price"),wildlifeRisk:g("wildlifeRisk"),braai:g("braai")};}
+function campChips(c){if(!c)return"";const pairs=[["water","Water"],["power","Power"],["ablution","Ablution"],["surface",""],["noise","Noise"],["price",""],["wildlifeRisk","Wildlife"],["braai","Braai"]];return pairs.filter(([k])=>c[k]).map(([k,l])=>`<span class="tag">${l?l+" "+esc(c[k]):esc(c[k])}</span>`).join("");}
+function poiChipsHTML(selected){return `<div class="chip-row poi-row">${POI.map(p=>`<button type="button" class="poi-chip ${selected===p.id?"on":""}" data-poi="${p.id}">${p.icon} ${p.label}</button>`).join("")}</div>`;}
+let _poiPick="";
+function bindPoiRow(root){const el=root||document;el.querySelectorAll(".poi-row").forEach(row=>{row.querySelectorAll("[data-poi]").forEach(b=>b.onclick=ev=>{ev.preventDefault();_poiPick=_poiPick===b.dataset.poi?"":b.dataset.poi;row.querySelectorAll("[data-poi]").forEach(x=>x.classList.toggle("on",x.dataset.poi===_poiPick));});});}
+function geoFix(){return new Promise(res=>{if(!navigator.geolocation){res({lat:null,lng:null});return;}navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lng:p.coords.longitude}),()=>res({lat:null,lng:null}),{timeout:4500,maximumAge:60000,enableHighAccuracy:true});});}
+function pickFiles(opts){opts=opts||{};return new Promise(res=>{const i=document.createElement("input");i.type="file";i.accept=opts.accept||"image/*";if(opts.multiple)i.multiple=true;if(opts.capture)i.setAttribute("capture",opts.capture);i.className="hidden";document.body.appendChild(i);const done=files=>{try{i.remove();}catch(e){}res(files);};i.onchange=()=>done(Array.from(i.files||[]));i.click();});}
+function fileDay(f){try{return new Date(f.lastModified||Date.now()).toISOString().slice(0,10);}catch(e){return new Date().toISOString().slice(0,10);}}
+function findDayBucket(t,date){const days=(t.days||[]).filter(d=>d.date===date);if(!days.length)return null;return days.find(d=>(d.photos||[]).length)||days[0];}
+function upsertPlace(t,p){t.destinations=t.destinations||[];const key=(p.name||"").trim().toLowerCase();let d=key?t.destinations.find(x=>(x.name||"").trim().toLowerCase()===key):null;if(!d&&p.lat!=null)d=t.destinations.find(x=>x.lat!=null&&Math.abs(x.lat-p.lat)<0.002&&Math.abs((x.lng||0)-(p.lng||0))<0.002);if(!d){d=migratePlace({id:uid("d"),name:p.name||"Stop",country:p.country||"",notes:p.notes||"",lat:p.lat??null,lng:p.lng??null,poiType:p.poiType||"",campsite:p.campsite||emptyCamp()});t.destinations.push(d);}else{if(p.poiType)d.poiType=p.poiType;if(p.campsite)d.campsite=Object.assign(emptyCamp(),d.campsite||{},p.campsite);if(p.lat!=null){d.lat=p.lat;d.lng=p.lng;}if(p.notes)d.notes=p.notes;}return d;}
+
 
 function sample(){return{id:uid("t"),name:"Namibia Kaokoland",startDate:"2026-09-01",endDate:"2026-09-18",summary:"Windhoek to Opuwo and Epupa Falls — gravel, Himba country, Kunene spray.",currency:"NAD",budget:25000,cover:null,bookLayout:"balanced",viewMode:"magazine",
-destinations:[{id:uid("d"),name:"Windhoek",country:"Namibia",notes:"",lat:-22.56,lng:17.08},{id:uid("d"),name:"Opuwo",country:"Namibia",notes:"Last reliable fuel north.",lat:-18.06,lng:13.84},{id:uid("d"),name:"Epupa Falls",country:"Namibia",notes:"Kunene River.",lat:-17.0,lng:13.25}],
+destinations:[{id:uid("d"),name:"Windhoek",country:"Namibia",notes:"",lat:-22.56,lng:17.08,poiType:"",campsite:emptyCamp()},{id:uid("d"),name:"Opuwo",country:"Namibia",notes:"Last reliable fuel north.",lat:-18.06,lng:13.84,poiType:"fuel",campsite:emptyCamp()},{id:uid("d"),name:"Epupa Falls",country:"Namibia",notes:"Kunene River.",lat:-17.0,lng:13.25,poiType:"camp",campsite:{water:"yes",power:"camp",ablution:"good",surface:"gravel",noise:"moderate",price:"320 NAD",wildlifeRisk:"medium",braai:"yes"}}],
 legs:[{id:uid("l"),mode:"flight",from:"Cape Town",to:"Windhoek",notes:""},{id:uid("l"),mode:"car",from:"Windhoek",to:"Opuwo",notes:"C43"}],
 packing:TPL[0].items.map(i=>({id:uid("p"),cat:i.c,name:i.n,done:false})),packingName:TPL[0].name,
 pretrip:PRE.map(x=>({id:uid("pt"),name:x.n,done:false})),
-days:[],expenses:[],bookings:[],docs:[],trail:[],storyline:[],createdAt:new Date().toISOString()};}
+days:[
+  blankDay({date:"2026-09-02",time:"18:40",title:"Dust and diesel",place:"Outjo",campName:"Namib Wilde",km:380,fuelNote:"Full in Outjo",wildlife:"Kudu at dusk",notes:"Gravel started after the last tar. Camp quiet, braai smoke, first jackals.",kind:"note",poiType:"camp",campsite:{water:"yes",power:"none",ablution:"basic",surface:"sand",noise:"quiet",price:"180 NAD",wildlifeRisk:"low",braai:"yes"}}),
+  blankDay({date:"2026-09-08",time:"16:10",title:"Kunene spray",place:"Epupa Falls",campName:"Omarunga",km:210,fuelNote:"",wildlife:"Crocodiles below the falls",notes:"Himba market in the morning, then the river. Sleep to the sound of the falls.",kind:"note",poiType:"camp",campsite:{water:"yes",power:"camp",ablution:"good",surface:"gravel",noise:"moderate",price:"320 NAD",wildlifeRisk:"medium",braai:"yes"}})
+],expenses:[],bookings:[],docs:[],trail:[],storyline:[],createdAt:new Date().toISOString()};}
 
 let S={trips:[],lists:TPL.map(t=>({id:t.id,name:t.name,items:t.items.map(i=>({id:uid("i"),cat:i.c,name:i.n}))})),screen:"home",tripId:null,tab:"story",map:null,watching:false,watchId:null};
 
 function load(){try{let r=localStorage.getItem(STORAGE);if(!r)r=localStorage.getItem("waybook_v3");if(!r)r=localStorage.getItem("waybook_v2");if(r){const p=JSON.parse(r);S.trips=p.trips||[];if(p.lists?.length)S.lists=p.lists;}}catch(e){}
-if(!S.trips.length){S.trips=[sample()];save();}}
+if(!S.trips.length){S.trips=[sample()];}
+S.trips.forEach(migrateTrip);save();}
 function save(){localStorage.setItem(STORAGE,JSON.stringify({trips:S.trips,lists:S.lists,ver:VER}));}
 function T(){return S.trips.find(t=>t.id===S.tripId)||null;}
 function toast(m){const e=document.getElementById("toast");e.textContent=m;e.classList.remove("hidden");setTimeout(()=>e.classList.add("hidden"),2500);}
@@ -221,7 +289,7 @@ function dockHTML(a){return`<button class="${a==="home"?"on":""}" data-go="home"
 <button class="${a==="trip"?"on":""}" data-go="trip-or-home">${S.tripId?"Open":"Trip"}</button>`;}
 
 function home(){
-  return`<div class="top"><div class="logo">Wikilog's <span>${VER}</span></div>
+  return`<div class="top"><div class="logo">Wikilog's <span class="ver-chip">${VER}</span></div>
   <button class="btn btn-sm" id="btnNew">New trip</button></div>
   <div class="hero-cover"><div class="inner">
   <div class="kicker">Travel journal</div>
@@ -256,13 +324,14 @@ function tripView(t){
   const mode=t.viewMode||"magazine";
   const tabs=[["story","Story"],["map","Map"],["log","Journal"],["pack","Pack"],["spend","Spend"],["docs","Docs"],["book","Book"]];
   const cover=t.cover?`<img src="${t.cover}" alt=""/>`:"";
-  const head=mode==="map"?"":`<div class="hero-cover" style="min-height:200px">${cover}<div class="inner">
+  const slim=S.tab==="log"||S.tab==="map";
+  const head=mode==="map"||slim?"":`<div class="hero-cover" style="min-height:200px">${cover}<div class="inner">
   <div class="kicker">${esc([t.startDate,t.endDate].filter(Boolean).join(" · "))}</div>
   <h1 class="display">${esc(t.name)}</h1>
   <p class="lede">${esc(t.summary||"")}</p>
   </div></div>`;
   return`<div class="top no-print"><button class="icon-btn" data-go="home">←</button>
-  <div class="logo" style="font-size:1.1rem">${esc(t.name)}</div>
+  <div class="logo" style="font-size:1.1rem">${esc(t.name)} <span class="ver-chip">${VER}</span></div>
   <button class="btn btn-sm btn-ghost" id="btnShare">Share</button></div>
   ${head}
   <div class="mode-switch no-print">
@@ -301,9 +370,10 @@ function tabStory(t){
     <button class="btn btn-ghost btn-sm" id="playStoryline">Play in order</button>
   </div>
   <p class="meta">Clips from journal + clips you add here. Max 3 min each.</p>
-  </div>`:`<div class="panel"><strong>Storyline</strong>
-  <p class="meta" style="margin:8px 0 12px">Build a reel of short clips for this trip — from the journal or add them here.</p>
-  <button class="btn btn-sm" id="addStoryClip">+ First storyline clip</button></div>`;
+  </div>`:`<div class="panel empty" style="text-align:left"><strong>Storyline</strong>
+  <p class="meta" style="margin:8px 0 12px">No clips yet. Record a reel, or start with a photo / voice note from Quick Capture.</p>
+  <div class="row"><button class="btn btn-sm" id="addStoryClip">+ First storyline clip</button>
+  <button class="btn btn-ghost btn-sm" id="qcFromStory">Quick capture</button></div></div>`;
   return`${reel}<div class="stat-row">
   <div class="stat"><b>${(t.days||[]).length}</b><span>Entries</span></div>
   <div class="stat"><b>${(t.destinations||[]).length}</b><span>Places</span></div>
@@ -332,7 +402,8 @@ function tabStory(t){
   </div>
   <div class="panel"><div class="row-between"><h3 class="section-title" style="font-size:1.2rem;margin:0">Route</h3>
   <button class="btn btn-sm btn-soft" id="addDest">+ Place</button></div>
-  <ul class="list">${(t.destinations||[]).map(d=>`<li><div style="flex:1"><strong>${esc(d.name)}</strong><div class="meta">${esc(d.country)} ${d.notes?"· "+esc(d.notes):""}</div></div>
+  <ul class="list">${(t.destinations||[]).map(d=>`<li><div style="flex:1"><strong>${esc(d.name)}</strong> ${d.poiType?`<span class="tag">${esc(poiLabel(d.poiType))}</span>`:""}<div class="meta">${esc(d.country)} ${d.notes?"· "+esc(d.notes):""}</div>${campChips(d.campsite)}</div>
+  <button class="btn btn-ghost btn-sm" data-edit-dest="${d.id}">Edit</button>
   <button class="btn btn-ghost btn-sm" data-del-dest="${d.id}">×</button></li>`).join("")}</ul>
   <button class="btn btn-ghost btn-sm" id="addLeg">+ Travel leg</button>
   <ul class="list">${(t.legs||[]).map(l=>`<li><div style="flex:1"><strong>${esc(l.mode)}</strong> ${esc(l.from)} → ${esc(l.to)}</div>
@@ -344,29 +415,62 @@ function tabStory(t){
   <button class="btn btn-ghost btn-block" id="btnDel" style="margin-top:16px;color:var(--danger)">Delete trip</button>`;
 }
 function tabMap(t){
+  const places=t.destinations||[];
+  const empty=!places.length&&!(t.trail||[]).length;
   return`<div class="panel no-print"><div class="row-between"><strong>Live map</strong>
   <div class="row"><button class="btn btn-sm btn-soft" id="btnTrail">${S.watching?"Stop trail":"Start trail"}</button>
   <button class="btn btn-sm btn-ghost" id="btnClearTrail">Clear</button></div></div>
   <p class="meta">Pins from places + optional GPS breadcrumb.</p></div>
+  ${empty?`<div class="empty"><div class="ill">🗺</div><p>No trail yet. Start GPS, check in a camp, or drop a place.</p>
+  <div class="empty-actions"><button class="btn" id="qcCheckinFromMap">Check in</button>
+  <button class="btn btn-ghost" id="btnTrailEmpty">Start trail</button></div></div>`:""}
   <div id="map" class="${(t.viewMode==="map")?"map-hero":""}"></div>
-  <p class="meta" style="margin-top:8px">${(t.trail||[]).length} trail points</p>`;
+  <p class="meta" style="margin-top:8px">${(t.trail||[]).length} trail points</p>
+  <div class="panel trip-places" style="margin-top:12px"><div class="row-between"><strong>Places</strong>
+  <button class="btn btn-sm btn-soft" id="addDestMap">+ Place</button></div>
+  <ul class="list">${places.map(d=>`<li><div style="flex:1"><strong>${esc(d.name)}</strong> ${d.poiType?`<span class="tag">${esc(poiLabel(d.poiType))}</span>`:""}
+  <div class="meta">${esc(d.country||"")} ${d.notes?"· "+esc(d.notes):""}</div>${campChips(d.campsite)}</div>
+  <button class="btn btn-ghost btn-sm" data-edit-dest="${d.id}">Edit</button></li>`).join("")||"<li class='meta'>No places yet</li>"}</ul></div>`;
+}
+function memCard(t,d){
+  const thumb=(d.photos&&d.photos[0])?`<img src="${d.photos[0]}" alt=""/>`:"";
+  const spend=daySpend(t,d.date);
+  const title=d.title||d.campName||d.place||(d.kind==="checkin"?"Check-in":d.kind==="voice"?"Voice note":d.kind==="photo"?"Photos":"Moment");
+  const line=oneLiner(d.notes||d.fuelNote||d.wildlife||"");
+  const chips=[
+    d.poiType?`<span class="tag">${esc(poiLabel(d.poiType))}</span>`:"",
+    d.campName?`<span class="tag">${esc(d.campName)}</span>`:"",
+    d.km?`<span class="tag">${esc(d.km)} km</span>`:"",
+    d.fuelNote?`<span class="tag">Fuel ${esc(d.fuelNote)}</span>`:"",
+    d.wildlife?`<span class="tag">${esc(d.wildlife)}</span>`:"",
+    spend?`<span class="tag warm">${spend.toFixed(0)} ${esc(t.currency||"")}</span>`:""
+  ].join("")+campChips(d.campsite);
+  return`<article class="mem-card" data-open-day="${d.id}">
+  <div class="mem-thumb">${thumb}</div>
+  <div class="mem-body">
+    <div class="row-between"><div class="when">${esc(d.date)} · ${esc(d.time||"")} ${d.place?"· "+esc(d.place):""}</div>
+    <button class="btn btn-ghost btn-sm" data-del-day="${d.id}">×</button></div>
+    <h4>${esc(title)}</h4>
+    ${line?`<p class="one-liner">${esc(line)}</p>`:""}
+    <div class="mem-chips">${chips}</div>
+    ${d.voice?`<audio controls src="${d.voice}" style="width:100%;margin-top:10px"></audio>`:""}
+    ${d.story?`<div class="story-badge" style="margin-top:8px">Video clip</div><div class="video-wrap" style="margin-top:6px"><video data-media="${String(d.story).startsWith("idb:")?String(d.story).slice(4):""}" src="${String(d.story).startsWith("idb:")?"":d.story}" controls playsinline webkit-playsinline preload="metadata"></video><div class="wm-badge">Wikilog's<small>any journey, one book</small></div></div>`:""}
+    ${(d.photos||[]).length>1?`<div class="photo-grid">${d.photos.slice(0,6).map(p=>`<img src="${p}" alt=""/>`).join("")}</div>`:""}
+    <div class="share-row no-print">
+    ${d.story?`<button class="btn btn-soft btn-sm" data-share-story="${d.id}">Share video · Wikilog's</button>`:((d.photos||[]).length?`<button class="btn btn-soft btn-sm" data-share-day="${d.id}">Share photo card</button>`:"")}
+    </div>
+  </div>
+  </article>`;
 }
 function tabLog(t){
-  const days=[...(t.days||[])].sort((a,b)=>(a.date+a.time).localeCompare(b.date+b.time));
+  const days=[...(t.days||[])].sort((a,b)=>((a.date||"")+(a.time||"")).localeCompare((b.date||"")+(b.time||"")));
   return`<div class="row-between no-print"><div>${PROMPTS.map(p=>`<span class="prompt" data-prompt="${esc(p)}">${esc(p)}</span>`).join("")}</div>
-  <button class="btn btn-sm" id="addDay">+ Entry</button></div>
-  ${days.length?days.map(d=>`<article class="entry panel" style="border-left:none">
-  <div class="row-between"><div class="when">${esc(d.date)} · ${esc(d.time)} ${d.place?"· "+esc(d.place):""}</div>
-  <div class="row"><button class="btn btn-ghost btn-sm" data-del-day="${d.id}">×</button></div></div>
-  <h4>${esc(d.title||"Moment")}</h4>
-  <p style="margin-top:8px;line-height:1.5;white-space:pre-wrap">${esc(d.notes)}</p>
-  ${d.voice?`<audio controls src="${d.voice}" style="width:100%;margin-top:10px"></audio>`:""}
-  ${d.story?`<div class="story-badge" style="margin-top:8px">Video clip</div><div class="video-wrap" style="margin-top:6px"><video data-media="${String(d.story).startsWith(`idb:`)?String(d.story).slice(4):``}" src="${String(d.story).startsWith(`idb:`)?``:d.story}" controls playsinline webkit-playsinline preload="metadata"></video><div class="wm-badge">Wikilog's<small>any journey, one book</small></div></div>`:""}
-  ${(d.photos||[]).length?`<div class="photo-grid">${d.photos.map(p=>`<img src="${p}" alt=""/>`).join("")}</div>`:""}
-  <div class="share-row no-print">
-  ${d.story?`<button class="btn btn-soft btn-sm" data-share-story="${d.id}">Share video · Wikilog's</button>`:((d.photos||[]).length?`<button class="btn btn-soft btn-sm" data-share-day="${d.id}">Share photo card</button>`:"")}
-  </div>
-  </article>`).join(""):`<div class="empty"><div class="ill">✎</div>No entries — tap + or a prompt</div>`}`;
+  <div class="row"><button class="btn btn-ghost btn-sm" id="bulkPhotos">Import photos</button>
+  <button class="btn btn-sm" id="addDay">+ Entry</button></div></div>
+  ${days.length?days.map(d=>memCard(t,d)).join(""):`<div class="empty"><div class="ill">✎</div>
+  <p>No days yet — capture the road.</p>
+  <div class="empty-actions"><button class="btn" id="qcFromEmpty">Quick capture</button>
+  <button class="btn btn-ghost" id="bulkFromEmpty">Import photos</button></div></div>`}`;
 }
 function tabPack(t){
   const items=t.packing||[],done=items.filter(i=>i.done).length;
@@ -414,8 +518,9 @@ function tabBook(t){
   <h2 class="section-title" style="margin-top:24px">Route</h2>
   <ol style="padding-left:18px">${(t.destinations||[]).map(d=>`<li style="margin:8px 0">${esc(d.name)}${d.country?", "+esc(d.country):""}</li>`).join("")}</ol>
   <h2 class="section-title" style="margin-top:24px">Journal</h2>
-  ${days.map(d=>`<div class="entry"><div class="when">${esc(d.date)} · ${esc(d.title)}</div>
+  ${days.map(d=>`<div class="entry"><div class="when">${esc(d.date)} · ${esc(d.title||d.campName||d.place||"")}</div>
   <p style="margin-top:6px">${esc(d.notes)}</p>
+  ${[d.km?d.km+" km":"",d.fuelNote,d.wildlife].filter(Boolean).length?`<p class="meta">${esc([d.km?d.km+" km":"",d.fuelNote,d.wildlife].filter(Boolean).join(" · "))}</p>`:""}
   ${layout!=="text"&&(d.photos||[]).length?`<div class="photo-grid">${d.photos.slice(0,layout==="photo"?9:3).map(p=>`<img src="${p}"/>`).join("")}</div>`:""}
   </div>`).join("")||"<p class='meta'>No entries</p>"}
   <h2 class="section-title" style="margin-top:24px">Spending</h2>
@@ -1164,17 +1269,252 @@ function stopStoryRec(previewEl,statusEl){
   });
 }
 
+function poiIcon(type){
+  const p=poiMeta(type);const emoji=p?p.icon:"📌";
+  return L.divIcon({className:"poi-pin",html:`<span>${emoji}</span>`,iconSize:[28,28],iconAnchor:[14,14]});
+}
 function initMap(t){
   const el=document.getElementById("map");if(!el||!window.L)return;
   if(S.map){try{S.map.remove();}catch(e){}S.map=null;}
   const pts=[];(t.destinations||[]).forEach(d=>{if(d.lat!=null)pts.push([d.lat,d.lng]);});
+  (t.days||[]).forEach(d=>{if(d.lat!=null)pts.push([d.lat,d.lng]);});
   (t.trail||[]).forEach(p=>pts.push([p.lat,p.lng]));
   S.map=L.map(el).setView(pts[0]||[-22.5,17],6);
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"© OSM"}).addTo(S.map);
-  (t.destinations||[]).forEach(d=>{if(d.lat!=null)L.marker([d.lat,d.lng]).addTo(S.map).bindPopup(esc(d.name));});
+  (t.destinations||[]).forEach(d=>{if(d.lat!=null)L.marker([d.lat,d.lng],{icon:poiIcon(d.poiType)}).addTo(S.map).bindPopup(`<strong>${esc(d.name)}</strong>${d.poiType?"<br/>"+esc(poiLabel(d.poiType)):""}${d.notes?"<br/>"+esc(d.notes):""}`);});
+  (t.days||[]).filter(d=>d.kind==="checkin"&&d.lat!=null).forEach(d=>{L.marker([d.lat,d.lng],{icon:poiIcon(d.poiType)}).addTo(S.map).bindPopup(`<strong>${esc(d.place||d.campName||"Check-in")}</strong>${d.poiType?"<br/>"+esc(poiLabel(d.poiType)):""}`);});
   if((t.trail||[]).length>1)L.polyline(t.trail.map(p=>[p.lat,p.lng]),{color:"#2c4a3e",weight:3}).addTo(S.map);
   if(pts.length>1)S.map.fitBounds(pts,{padding:[40,40]});
   setTimeout(()=>S.map&&S.map.invalidateSize(),250);
+}
+
+
+function closeSheet(){const root=document.getElementById("modalRoot");if(root)root.innerHTML="";}
+function sheet(html){const root=document.getElementById("modalRoot");root.innerHTML=`<div class="modal-bg" id="sheetBg"><div class="sheet"><div class="sheet-handle"></div>${html}</div></div>`;document.getElementById("sheetBg").addEventListener("click",e=>{if(e.target.id==="sheetBg")closeSheet();});}
+
+function ensureTrip(then){
+  if(T()){then();return;}
+  sheet(`<h2>Start capturing</h2>
+    <p class="meta" style="margin-bottom:12px">Pick a trip — or start one — then Quick Capture.</p>
+    ${S.trips.map(t=>`<button class="btn btn-soft btn-block" style="margin-top:8px" data-pick-trip="${t.id}">${esc(t.name)}</button>`).join("")||'<p class="meta">No trips yet</p>'}
+    <button class="btn btn-block" id="qcNewTrip" style="margin-top:12px">New trip</button>
+    <button class="btn btn-ghost btn-block" id="qcCancel" style="margin-top:8px">Cancel</button>`);
+  document.querySelectorAll("[data-pick-trip]").forEach(b=>b.onclick=()=>{S.tripId=b.dataset.pickTrip;S.screen="trip";S.tab="log";save();closeSheet();render();then();});
+  document.getElementById("qcCancel").onclick=closeSheet;
+  document.getElementById("qcNewTrip").onclick=()=>{
+    closeSheet();
+    modal("New trip",`<div class="field"><label>Name</label><input id="mN" placeholder="Kaokoland…"/></div>
+    <div class="row"><div class="field" style="flex:1"><label>Start</label><input type="date" id="mS"/></div>
+    <div class="field" style="flex:1"><label>End</label><input type="date" id="mE"/></div></div>`,()=>{
+      const nt={id:uid("t"),name:document.getElementById("mN").value.trim()||"Untitled",startDate:document.getElementById("mS").value,endDate:document.getElementById("mE").value,
+        summary:"",currency:"NAD",budget:0,cover:null,bookLayout:"balanced",viewMode:"magazine",destinations:[],legs:[],bookings:[],docs:[],trail:[],storyline:[],
+        pretrip:PRE.map(x=>({id:uid("pt"),name:x.n,done:false})),packing:[],packingName:"Empty",days:[],expenses:[],createdAt:new Date().toISOString()};
+      migrateTrip(nt);S.trips.unshift(nt);save();S.tripId=nt.id;S.screen="trip";S.tab="log";render();toast("Trip ready");then();
+    });
+  };
+}
+
+function openQuickCapture(){
+  ensureTrip(()=>{
+    const t=T();
+    sheet(`<h2>Quick capture</h2>
+      <p class="meta" style="margin-bottom:4px">Save to <strong>${esc(t.name)}</strong> · ≤3 taps</p>
+      <div class="qc-grid">
+        <button type="button" data-qc="photo"><span class="qc-ico">📷</span>Photo</button>
+        <button type="button" data-qc="voice"><span class="qc-ico">🎙</span>Voice</button>
+        <button type="button" data-qc="checkin"><span class="qc-ico">📍</span>Check-in</button>
+        <button type="button" data-qc="note"><span class="qc-ico">✎</span>Note</button>
+      </div>
+      <button class="btn btn-ghost btn-block" data-qc="bulk">Import photos</button>
+      <button class="btn btn-ghost btn-block" id="qcClose" style="margin-top:8px">Close</button>`);
+    document.getElementById("qcClose").onclick=closeSheet;
+    document.querySelectorAll("[data-qc]").forEach(b=>b.onclick=()=>{
+      const a=b.dataset.qc;
+      if(a==="photo")qcPhoto();
+      else if(a==="voice")qcVoice();
+      else if(a==="checkin")qcCheckin();
+      else if(a==="note")qcNote();
+      else if(a==="bulk")qcBulkPhotos();
+    });
+  });
+}
+
+async function addPhotosGrouped(files, forceDate){
+  const t=T();if(!t||!files.length)return 0;
+  const groups={};
+  for(const f of files){
+    const key=forceDate||fileDay(f);
+    (groups[key]=groups[key]||[]).push(f);
+  }
+  let n=0;
+  for(const [date,flist] of Object.entries(groups)){
+    const photos=[];
+    for(const f of flist){try{photos.push(await fileURL(f));n++;}catch(e){}}
+    if(!photos.length)continue;
+    const bucket=findDayBucket(t,date);
+    if(bucket){bucket.photos=(bucket.photos||[]).concat(photos);if(!bucket.kind||bucket.kind==="note"){/* keep */}}
+    else{t.days.push(blankDay({date,title:photos.length>1?"Photos":"Photo",kind:"photo",photos,notes:""}));}
+  }
+  save();render();
+  return n;
+}
+
+async function qcPhoto(){
+  closeSheet();
+  const files=await pickFiles({accept:"image/*",multiple:true,capture:"environment"});
+  if(!files.length){toast("No photo");return;}
+  const n=await addPhotosGrouped(files,new Date().toISOString().slice(0,10));
+  S.tab="log";render();toast(n===1?"Photo saved":n+" photos saved");
+}
+
+async function qcBulkPhotos(){
+  closeSheet();
+  const files=await pickFiles({accept:"image/*",multiple:true});
+  if(!files.length){toast("No photos");return;}
+  const days=new Set(files.map(fileDay));
+  const today=new Date().toISOString().slice(0,10);
+  if(days.size<=1){
+    const n=await addPhotosGrouped(files, [...days][0]||today);
+    S.tab="log";render();toast(n+" photo"+(n===1?"":"s")+" · "+([...days][0]||today));
+    return;
+  }
+  sheet(`<h2>Import photos</h2>
+    <p class="meta">${files.length} photos across ${days.size} days (from file dates).</p>
+    <button class="btn btn-block" id="bulkByDay" style="margin-top:12px">Group by day</button>
+    <button class="btn btn-soft btn-block" id="bulkToday" style="margin-top:8px">All on today</button>
+    <button class="btn btn-ghost btn-block" id="qcCancel" style="margin-top:8px">Cancel</button>`);
+  document.getElementById("qcCancel").onclick=closeSheet;
+  document.getElementById("bulkByDay").onclick=async()=>{closeSheet();const n=await addPhotosGrouped(files,null);S.tab="log";render();toast(n+" photos grouped by day");};
+  document.getElementById("bulkToday").onclick=async()=>{closeSheet();const n=await addPhotosGrouped(files,today);S.tab="log";render();toast(n+" photos · today");};
+}
+
+let _voiceRec=null,_voiceChunks=[],_voiceStream=null;
+function stopVoice(){
+  return new Promise(res=>{
+    try{if(_voiceRec&&_voiceRec.state!=="inactive"){
+      _voiceRec.onstop=()=>{
+        if(_voiceStream){try{_voiceStream.getTracks().forEach(t=>t.stop());}catch(e){}}
+        _voiceStream=null;
+        const blob=new Blob(_voiceChunks,{type:(_voiceChunks[0]&&_voiceChunks[0].type)||"audio/webm"});
+        res(blob.size?blob:null);
+      };
+      try{_voiceRec.stop();}catch(e){res(null);}
+    }else res(null);}catch(e){res(null);}
+  });
+}
+async function qcVoice(){
+  sheet(`<h2>Voice</h2>
+    <p class="meta" id="vStatus">Tap record — stop saves to today.</p>
+    <button class="btn btn-block" id="vRec" style="margin-top:12px">Record</button>
+    <button class="btn btn-ghost btn-block" id="vFile" style="margin-top:8px">Pick audio file</button>
+    <button class="btn btn-ghost btn-block" id="qcCancel" style="margin-top:8px">Cancel</button>`);
+  document.getElementById("qcCancel").onclick=()=>{stopVoice();closeSheet();};
+  document.getElementById("vFile").onclick=async()=>{
+    const files=await pickFiles({accept:"audio/*",multiple:false});
+    if(!files[0])return;
+    const voice=await fileURL(files[0]);
+    patch(t=>t.days.push(blankDay({title:"Voice note",kind:"voice",voice,notes:""})));
+    closeSheet();S.tab="log";render();toast("Voice saved");
+  };
+  document.getElementById("vRec").onclick=async()=>{
+    const btn=document.getElementById("vRec"),st=document.getElementById("vStatus");
+    if(_voiceRec&&_voiceRec.state==="recording"){
+      const blob=await stopVoice();
+      if(!blob){toast("No audio");return;}
+      const voice=await fileURL(new File([blob],"note.webm",{type:blob.type||"audio/webm"}));
+      patch(t=>t.days.push(blankDay({title:"Voice note",kind:"voice",voice,notes:""})));
+      closeSheet();S.tab="log";render();toast("Voice saved");
+      return;
+    }
+    try{
+      _voiceStream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+      _voiceChunks=[];
+      _voiceRec=new MediaRecorder(_voiceStream);
+      _voiceRec.ondataavailable=e=>{if(e.data&&e.data.size)_voiceChunks.push(e.data);};
+      _voiceRec.start();
+      btn.textContent="Stop & save";
+      if(st)st.innerHTML='<span class="rec-dot"></span>Recording… tap stop';
+    }catch(e){
+      toast("Mic blocked — pick a file");
+    }
+  };
+}
+
+function qcCheckin(){
+  _poiPick="camp";
+  const today=new Date().toISOString().slice(0,10);
+  sheet(`<h2>Check-in</h2>
+    <p class="meta" id="ciGeo">Locating…</p>
+    <div class="field"><label>Place / camp</label><input id="ciName" placeholder="Omarunga, Epupa…"/></div>
+    <div class="field"><label>POI type</label>${poiChipsHTML("camp")}</div>
+    <div class="row"><div class="field" style="flex:1"><label>Price</label><input id="ciPrice" placeholder="NAD"/></div>
+    <div class="field" style="flex:1"><label>Note</label><input id="ciNote" placeholder="Quiet, good shade"/></div></div>
+    <p class="meta" style="margin:8px 0">Campsite</p>
+    ${campFieldsHTML(emptyCamp(),"ci_")}
+    <button class="btn btn-block" id="ciSave" style="margin-top:8px">Save check-in</button>
+    <button class="btn btn-ghost btn-block" id="qcCancel" style="margin-top:8px">Cancel</button>`);
+  bindPoiRow(document.getElementById("modalRoot"));
+  document.getElementById("qcCancel").onclick=closeSheet;
+  let fix={lat:null,lng:null};
+  geoFix().then(g=>{fix=g;const el=document.getElementById("ciGeo");if(el)el.textContent=g.lat!=null?`GPS ${g.lat.toFixed(4)}, ${g.lng.toFixed(4)}`:"No GPS — save anyway";});
+  document.getElementById("ciSave").onclick=()=>{
+    const raw=(document.getElementById("ciName").value||"").trim();
+    const name=raw||"Check-in";
+    const note=document.getElementById("ciNote").value||"";
+    const camp=readCamp("ci_");
+    const price=document.getElementById("ciPrice").value;
+    if(price&&!camp.price)camp.price=price;
+    patch(t=>{
+      t.days.push(blankDay({title:"Check-in",place:name,campName:raw,notes:note,kind:"checkin",poiType:_poiPick,campsite:camp,lat:fix.lat,lng:fix.lng,date:today}));
+      if(raw)upsertPlace(t,{name,lat:fix.lat,lng:fix.lng,poiType:_poiPick,campsite:camp,notes:note});
+    });
+    closeSheet();S.tab="log";render();toast("Checked in");
+  };
+}
+
+function qcNote(){
+  _poiPick="";
+  sheet(`<h2>Note</h2>
+    <div class="field"><label>One line</label><textarea id="nTxt" placeholder="Dust, diesel, first jackals…"></textarea></div>
+    <div class="row"><div class="field" style="flex:1"><label>Camp</label><input id="nCamp"/></div>
+    <div class="field" style="flex:1"><label>Km</label><input id="nKm" type="number" inputmode="decimal"/></div></div>
+    <div class="row"><div class="field" style="flex:1"><label>Fuel</label><input id="nFuel" placeholder="Full in Outjo"/></div>
+    <div class="field" style="flex:1"><label>Wildlife</label><input id="nWild"/></div></div>
+    <button class="btn btn-block" id="nSave">Save note</button>
+    <button class="btn btn-ghost btn-block" id="qcCancel" style="margin-top:8px">Cancel</button>`);
+  document.getElementById("qcCancel").onclick=closeSheet;
+  document.getElementById("nSave").onclick=()=>{
+    const notes=document.getElementById("nTxt").value.trim();
+    const campName=document.getElementById("nCamp").value.trim();
+    const km=document.getElementById("nKm").value;
+    const fuelNote=document.getElementById("nFuel").value.trim();
+    const wildlife=document.getElementById("nWild").value.trim();
+    if(!notes&&!campName&&!km&&!fuelNote&&!wildlife){toast("Write something");return;}
+    patch(t=>t.days.push(blankDay({title:oneLiner(notes||campName||"Note",40),place:campName,campName,km,fuelNote,wildlife,notes,kind:"note"})));
+    closeSheet();S.tab="log";render();toast("Note saved");
+  };
+}
+
+function placeEditor(existing){
+  const d=existing||{name:"",country:"",notes:"",lat:"",lng:"",poiType:"",campsite:emptyCamp()};
+  _poiPick=d.poiType||"";
+  modal(existing?"Edit place":"Place",`<div class="field"><label>Name</label><input id="dN" value="${esc(d.name||"")}"/></div>
+  <div class="field"><label>Country</label><input id="dC" value="${esc(d.country||"")}"/></div>
+  <div class="field"><label>POI type</label>${poiChipsHTML(_poiPick)}</div>
+  <div class="row"><div class="field" style="flex:1"><label>Lat</label><input id="dLa" type="number" step="any" value="${d.lat??""}"/></div>
+  <div class="field" style="flex:1"><label>Lng</label><input id="dLn" type="number" step="any" value="${d.lng??""}"/></div></div>
+  <div class="field"><label>Notes</label><textarea id="dNo">${esc(d.notes||"")}</textarea></div>
+  <p class="meta" style="margin:4px 0 8px">Campsite (optional)</p>
+  ${campFieldsHTML(d.campsite||emptyCamp(),"pl_")}`,()=>{
+    const rec={name:document.getElementById("dN").value||"Stop",country:document.getElementById("dC").value,notes:document.getElementById("dNo").value,
+      lat:document.getElementById("dLa").value===""?null:+document.getElementById("dLa").value,lng:document.getElementById("dLn").value===""?null:+document.getElementById("dLn").value,
+      poiType:_poiPick,campsite:readCamp("pl_")};
+    patch(t=>{
+      if(existing){const x=t.destinations.find(p=>p.id===existing.id);if(x)Object.assign(x,rec);}
+      else t.destinations.push(migratePlace(Object.assign({id:uid("d")},rec)));
+    });
+  });
+  setTimeout(()=>bindPoiRow(document.getElementById("modalRoot")),40);
 }
 
 function bind(){
@@ -1186,7 +1526,7 @@ function bind(){
   document.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>{S.tripId=b.dataset.open;S.screen="trip";S.tab=(T()?.viewMode==="map")?"map":"story";render();});
   document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{S.tab=b.dataset.tab;render();});
   document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>patch(t=>{t.viewMode=b.dataset.mode;S.tab=b.dataset.mode==="map"?"map":"story";}));
-  document.getElementById("fab").onclick=()=>{if(!T()){toast("Open a trip first");return;}S.tab="log";render();setTimeout(()=>document.getElementById("addDay")?.click(),50);};
+  document.getElementById("fab").onclick=()=>openQuickCapture();
 
   document.getElementById("btnNew")?.addEventListener("click",()=>modal("New trip",`<div class="field"><label>Name</label><input id="mN"/></div>
   <div class="row"><div class="field" style="flex:1"><label>Start</label><input type="date" id="mS"/></div>
@@ -1217,9 +1557,10 @@ function bind(){
   document.getElementById("btnDel")?.addEventListener("click",()=>{if(!confirm("Delete?"))return;S.trips=S.trips.filter(x=>x.id!==S.tripId);S.tripId=null;S.screen="home";save();render();});
   document.getElementById("btnShare")?.addEventListener("click",()=>{const t=T();share(t.name,`${t.name}\n${t.startDate||""} → ${t.endDate||""}\n${(t.destinations||[]).map(d=>d.name).join(" · ")}\n\n${t.summary||""}\n\nWikilog's`);});
 
-  document.getElementById("addDest")?.addEventListener("click",()=>modal("Place",`<div class="field"><label>Name</label><input id="dN"/></div><div class="field"><label>Country</label><input id="dC"/></div>
-  <div class="row"><div class="field" style="flex:1"><label>Lat</label><input id="dLa" type="number" step="any"/></div><div class="field" style="flex:1"><label>Lng</label><input id="dLn" type="number" step="any"/></div></div>
-  <div class="field"><label>Notes</label><textarea id="dNo"></textarea></div>`,()=>patch(t=>t.destinations.push({id:uid("d"),name:document.getElementById("dN").value||"Stop",country:document.getElementById("dC").value,notes:document.getElementById("dNo").value,lat:document.getElementById("dLa").value===""?null:+document.getElementById("dLa").value,lng:document.getElementById("dLn").value===""?null:+document.getElementById("dLn").value}))));
+  const openPlace=id=>{const t=T();placeEditor(id&&t?t.destinations.find(d=>d.id===id):null);};
+  document.getElementById("addDest")?.addEventListener("click",()=>openPlace(null));
+  document.getElementById("addDestMap")?.addEventListener("click",()=>openPlace(null));
+  document.querySelectorAll("[data-edit-dest]").forEach(b=>b.onclick=()=>openPlace(b.dataset.editDest));
   document.getElementById("addLeg")?.addEventListener("click",()=>modal("Leg",`<div class="field"><label>Mode</label><select id="lM"><option>flight</option><option>train</option><option>car</option><option>camper</option><option>bus</option><option>ferry</option><option>other</option></select></div>
   <div class="row"><div class="field" style="flex:1"><label>From</label><input id="lF"/></div><div class="field" style="flex:1"><label>To</label><input id="lT"/></div></div>`,()=>patch(t=>t.legs.push({id:uid("l"),mode:document.getElementById("lM").value,from:document.getElementById("lF").value,to:document.getElementById("lT").value,notes:""}))));
   document.getElementById("addBook")?.addEventListener("click",()=>modal("Booking",`<div class="field"><label>Type</label><select id="bT"><option>flight</option><option>hotel</option><option>car</option><option>activity</option></select></div>
@@ -1243,11 +1584,19 @@ function bind(){
   let pendingStory=null;/* legacy */;
   const openDay=pre=>{
     pendingStory=null;
+    _poiPick="";
     modal("Journal",`<div class="row"><div class="field" style="flex:1"><label>Date</label><input type="date" id="jD" value="${new Date().toISOString().slice(0,10)}"/></div>
   <div class="field" style="flex:1"><label>Time</label><input type="time" id="jT" value="${new Date().toTimeString().slice(0,5)}"/></div></div>
   <div class="field"><label>Headline</label><input id="jH" value="${esc(pre||"")}"/></div>
-  <div class="field"><label>Place</label><input id="jP"/></div>
+  <div class="field"><label>Place / camp</label><input id="jP"/></div>
+  <div class="field"><label>POI type</label>${poiChipsHTML("")}</div>
+  <div class="row"><div class="field" style="flex:1"><label>Camp name</label><input id="jCamp"/></div>
+  <div class="field" style="flex:1"><label>Km</label><input id="jKm" type="number" inputmode="decimal"/></div></div>
+  <div class="row"><div class="field" style="flex:1"><label>Fuel</label><input id="jFuel"/></div>
+  <div class="field" style="flex:1"><label>Wildlife</label><input id="jWild"/></div></div>
   <div class="field"><label>Notes</label><textarea id="jN"></textarea></div>
+  <p class="meta" style="margin:4px 0 8px">Campsite (optional)</p>
+  ${campFieldsHTML(emptyCamp(),"jC_")}
   <div class="field"><label>Photos</label><input type="file" id="jPh" accept="image/*" multiple capture="environment"/></div>
   <div class="field"><label>Voice</label><input type="file" id="jV" accept="audio/*" capture/></div>
   <div class="field"><label>Video</label>
@@ -1269,9 +1618,15 @@ function bind(){
       story="idb:"+mid;
     }else if(typeof pendingStory==="string"){story=pendingStory;}
     let lat=null,lng=null;try{const pos=await new Promise((res,rej)=>navigator.geolocation.getCurrentPosition(res,rej,{timeout:4000}));lat=pos.coords.latitude;lng=pos.coords.longitude;}catch(e){}
-    patch(t=>t.days.push({id:uid("day"),date:document.getElementById("jD").value,time:document.getElementById("jT").value,title:document.getElementById("jH").value,place:document.getElementById("jP").value,notes:document.getElementById("jN").value,photos,voice,story,lat,lng}));
+    const campName=document.getElementById("jCamp")?.value||"";
+    const km=document.getElementById("jKm")?.value||"";
+    const fuelNote=document.getElementById("jFuel")?.value||"";
+    const wildlife=document.getElementById("jWild")?.value||"";
+    const campsite=readCamp("jC_");
+    patch(t=>t.days.push(blankDay({date:document.getElementById("jD").value,time:document.getElementById("jT").value,title:document.getElementById("jH").value,place:document.getElementById("jP").value||campName,notes:document.getElementById("jN").value,photos,voice,story,lat,lng,campName,km,fuelNote,wildlife,kind:"note",poiType:_poiPick,campsite})));
   });
     setTimeout(()=>{
+      bindPoiRow(document.getElementById("modalRoot"));
       const prev=document.getElementById("storyPreview"), st=document.getElementById("jStoryStatus");
       document.getElementById("jStoryStart")?.addEventListener("click",async()=>{
         const blob=await openPhoneCamera();
@@ -1368,11 +1723,21 @@ function bind(){
   });
 
   document.getElementById("btnPrint")?.addEventListener("click",()=>window.print());
+  document.getElementById("qcFromEmpty")?.addEventListener("click",()=>openQuickCapture());
+  document.getElementById("qcFromStory")?.addEventListener("click",()=>openQuickCapture());
+  document.getElementById("qcCheckinFromMap")?.addEventListener("click",()=>ensureTrip(()=>qcCheckin()));
+  document.getElementById("btnTrailEmpty")?.addEventListener("click",()=>document.getElementById("btnTrail")?.click());
+  document.getElementById("bulkPhotos")?.addEventListener("click",()=>ensureTrip(()=>qcBulkPhotos()));
+  document.getElementById("bulkFromEmpty")?.addEventListener("click",()=>ensureTrip(()=>qcBulkPhotos()));
   if(S.tab==="map"||(T()?.viewMode==="map"&&S.tab==="map"))setTimeout(()=>initMap(T()),80);
   if(S.tab==="map")setTimeout(()=>initMap(T()),80);
   setTimeout(()=>{try{if(typeof hydrateVideos==="function")hydrateVideos(document.getElementById("app"));}catch(e){}},40);
 }
-if("serviceWorker" in navigator&&location.protocol.startsWith("http"))navigator.serviceWorker.register("./sw.js").catch(()=>{});
+if("serviceWorker" in navigator&&location.protocol.startsWith("http")){
+  const hadController=!!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  navigator.serviceWorker.addEventListener("controllerchange",()=>{if(hadController)location.reload();});
+}
 load();render();
 })();
 </script>
