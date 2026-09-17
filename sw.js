@@ -1,6 +1,6 @@
-const VER = "v4.1.0-social";
-const CACHE = "wikilogs-v4.1.0-social";
-const SHELL = ["./", "./index.html", "./manifest.json", "./sw.js", "./community.js"];
+const VER = "v4.1.1-polish";
+const CACHE = "wikilogs-v4.1.1-polish";
+const SHELL = ["./", "./index.html", "./manifest.json", "./sw.js", "./community.js", "./favicon.svg"];
 
 self.addEventListener("install", (e) => {
   self.skipWaiting();
