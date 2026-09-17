@@ -15,6 +15,7 @@
       homeBase: "Cape Town",
       avatar: "🌿",
       isMe: true,
+      closeFriendIds: ["trav_maya", "trav_jordan"],
     };
     const travelers = [
       me,
@@ -52,6 +53,17 @@
       {
         id: "pt_tokyo",
         ownerId: "trav_maya",
+        audience: "public",
+        days: [
+          { id: "td1", date: "2026-08-14", title: "Shibuya night walk", place: "Shibuya", notes: "Crossing at dusk — layers help.", poiType: "attraction" },
+          { id: "td2", date: "2026-08-15", title: "Senso-ji early", place: "Asakusa", notes: "Before the crowds.", poiType: "attraction" },
+          { id: "td3", date: "2026-08-16", title: "Hakone onsen day", place: "Hakone", notes: "~10 hours door-to-door with lunch.", poiType: "attraction" },
+        ],
+        destinations: [
+          { id: "tp1", name: "Shibuya", country: "Japan", poiType: "attraction" },
+          { id: "tp2", name: "Asakusa", country: "Japan", poiType: "attraction" },
+          { id: "tp3", name: "Hakone", country: "Japan", poiType: "attraction" },
+        ],
         title: "Tokyo long weekend",
         tripType: "city",
         summary:
@@ -70,6 +82,17 @@
       {
         id: "pt_kaoko",
         ownerId: "trav_jordan",
+        audience: "public",
+        days: [
+          { id: "kd1", date: "2026-09-02", title: "Windhoek arrival", place: "Windhoek", notes: "Hire sorted, last supermarket run.", poiType: "airport" },
+          { id: "kd2", date: "2026-09-05", title: "Opuwo fuel", place: "Opuwo", notes: "Last reliable diesel north.", poiType: "fuel" },
+          { id: "kd3", date: "2026-09-08", title: "Kunene spray", place: "Epupa Falls", notes: "Sleep to the falls.", poiType: "camp" },
+        ],
+        destinations: [
+          { id: "kp1", name: "Windhoek", country: "Namibia", poiType: "airport" },
+          { id: "kp2", name: "Opuwo", country: "Namibia", poiType: "fuel" },
+          { id: "kp3", name: "Epupa Falls", country: "Namibia", poiType: "camp" },
+        ],
         title: "Kaokoland gravel run",
         tripType: "camper",
         summary:
@@ -88,6 +111,16 @@
       {
         id: "pt_algarve",
         ownerId: "trav_sofia",
+        audience: "public",
+        days: [
+          { id: "ad1", date: "2026-07-06", title: "Sunrise swim", place: "Praia Dona Ana", notes: "Soft schedule, big picnic bag.", poiType: "beach" },
+          { id: "ad2", date: "2026-07-08", title: "Benagil cliffs", place: "Benagil", notes: "Gelato bribery after the walk.", poiType: "attraction" },
+        ],
+        destinations: [
+          { id: "ap1", name: "Lagos", country: "Portugal", poiType: "hotel" },
+          { id: "ap2", name: "Praia Dona Ana", country: "Portugal", poiType: "beach" },
+          { id: "ap3", name: "Benagil", country: "Portugal", poiType: "attraction" },
+        ],
         title: "Algarve family week",
         tripType: "beach",
         summary:
@@ -106,6 +139,16 @@
       {
         id: "pt_paris",
         ownerId: "trav_alex",
+        audience: "public",
+        days: [
+          { id: "pd1", date: "2026-06-20", title: "Marais morning", place: "Le Marais", notes: "Boulangerie before the museum.", poiType: "attraction" },
+          { id: "pd2", date: "2026-06-20", title: "Orsay afternoon", place: "Musée d'Orsay", notes: "One good meal beats three rushed ones.", poiType: "attraction" },
+        ],
+        destinations: [
+          { id: "pp1", name: "Le Marais", country: "France", poiType: "attraction" },
+          { id: "pp2", name: "Musée d'Orsay", country: "France", poiType: "attraction" },
+          { id: "pp3", name: "CDG", country: "France", poiType: "airport" },
+        ],
         title: "Paris layover — 36 hours",
         tripType: "flight",
         summary:
@@ -324,7 +367,7 @@
     ];
 
     return {
-      ver: 1,
+      ver: 2,
       mode: "demo",
       meId: "trav_me",
       travelers,
@@ -334,8 +377,25 @@
       follows,
       messages,
       feed,
+      shareLinks: [],
       queue: [],
     };
+  }
+
+  function migrateSocial(db) {
+    if (!db || typeof db !== "object") return db;
+    db.shareLinks = Array.isArray(db.shareLinks) ? db.shareLinks : [];
+    db.queue = Array.isArray(db.queue) ? db.queue : [];
+    (db.travelers || []).forEach((t) => {
+      if (!Array.isArray(t.closeFriendIds)) t.closeFriendIds = [];
+    });
+    (db.publicTrips || []).forEach((t) => {
+      if (!t.audience) t.audience = "public";
+      if (!Array.isArray(t.days)) t.days = [];
+      if (!Array.isArray(t.destinations)) t.destinations = [];
+    });
+    db.ver = Math.max(2, db.ver || 1);
+    return db;
   }
 
   function loadRaw() {
@@ -343,7 +403,11 @@
       const r = localStorage.getItem(SOCIAL_KEY);
       if (r) {
         const p = JSON.parse(r);
-        if (p && Array.isArray(p.travelers) && p.travelers.length) return p;
+        if (p && Array.isArray(p.travelers) && p.travelers.length) {
+          const m = migrateSocial(p);
+          saveRaw(m);
+          return m;
+        }
       }
     } catch (e) {}
     const s = seedDemo();
@@ -449,17 +513,155 @@
       const db = this._db();
       const following = new Set(this.followingIds());
       following.add(db.meId);
+      const me = db.meId;
       return db.feed
-        .filter((f) => following.has(f.authorId))
+        .filter((f) => {
+          if (!following.has(f.authorId)) return false;
+          if (!f.tripId) return true;
+          const t = db.publicTrips.find((x) => x.id === f.tripId);
+          if (!t) return true;
+          return this.canViewTrip(t, me);
+        })
         .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
     },
     publicTrips() {
       return this._db()
-        .publicTrips.slice()
+        .publicTrips.filter((t) => (t.audience || "public") === "public")
+        .slice()
         .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
     },
     publicTrip(id) {
       return this._db().publicTrips.find((t) => t.id === id) || null;
+    },
+    /** Trips visible to me via Share Circle (public / followers / close). */
+    circleTrips() {
+      const db = this._db();
+      const me = db.meId;
+      return db.publicTrips
+        .filter((t) => this.canViewTrip(t, me))
+        .slice()
+        .sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+    },
+    canViewTrip(t, viewerId) {
+      if (!t) return false;
+      const me = viewerId || this._db().meId;
+      if (t.ownerId === me) return true;
+      const aud = t.audience || "public";
+      if (aud === "public") return true;
+      if (aud === "private") return false;
+      if (aud === "followers") {
+        return this._db().follows.some((f) => f.followerId === me && f.followingId === t.ownerId);
+      }
+      if (aud === "close") {
+        const owner = this.profile(t.ownerId);
+        return !!(owner && (owner.closeFriendIds || []).includes(me));
+      }
+      return false;
+    },
+    closeFriendIds(userId) {
+      const db = this._db();
+      const p = this.profile(userId || db.meId);
+      return (p && p.closeFriendIds ? p.closeFriendIds.slice() : []) || [];
+    },
+    setCloseFriends(ids) {
+      const db = this._db();
+      const me = db.travelers.find((t) => t.id === db.meId);
+      if (!me) return [];
+      const set = new Set((ids || []).filter((id) => id && id !== db.meId));
+      me.closeFriendIds = [...set];
+      this._save(db);
+      return me.closeFriendIds.slice();
+    },
+    toggleCloseFriend(targetId) {
+      const cur = this.closeFriendIds();
+      const i = cur.indexOf(targetId);
+      if (i >= 0) cur.splice(i, 1);
+      else if (targetId) cur.push(targetId);
+      return this.setCloseFriends(cur);
+    },
+    shareLinksFor(localTripId) {
+      const db = this._db();
+      return db.shareLinks.filter(
+        (s) => s.localTripId === localTripId && s.ownerId === db.meId && !s.revoked
+      );
+    },
+    createShareLink(summary) {
+      const db = this._db();
+      const token = "sh_" + Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+      // Revoke prior active links for same local trip (single active link UX).
+      db.shareLinks.forEach((s) => {
+        if (s.localTripId === summary.localTripId && s.ownerId === db.meId && !s.revoked) {
+          s.revoked = true;
+          s.revokedAt = now();
+        }
+      });
+      const link = {
+        token,
+        id: uid("sl"),
+        ownerId: db.meId,
+        localTripId: summary.localTripId || null,
+        publishedTripId: summary.publishedTripId || null,
+        audience: summary.audience || "private",
+        title: summary.title || "Shared trip",
+        tripType: summary.tripType || "road",
+        summary: summary.summary || "",
+        startDate: summary.startDate || "",
+        endDate: summary.endDate || "",
+        places: summary.places || [],
+        highlights: summary.highlights || [],
+        days: summary.days || [],
+        destinations: summary.destinations || [],
+        reactions: {},
+        createdAt: now(),
+        revoked: false,
+      };
+      db.shareLinks.unshift(link);
+      this._save(db);
+      return link;
+    },
+    revokeShareLink(token) {
+      const db = this._db();
+      const s = db.shareLinks.find((x) => x.token === token && x.ownerId === db.meId);
+      if (!s) return null;
+      s.revoked = true;
+      s.revokedAt = now();
+      this._save(db);
+      return s;
+    },
+    regenerateShareLink(localTripId, summary) {
+      return this.createShareLink(Object.assign({}, summary, { localTripId }));
+    },
+    tripByShareToken(token) {
+      const db = this._db();
+      const s = db.shareLinks.find((x) => x.token === token && !x.revoked);
+      if (!s) return null;
+      return {
+        id: "share:" + s.token,
+        shareToken: s.token,
+        isShareLink: true,
+        ownerId: s.ownerId,
+        localTripId: s.localTripId,
+        audience: s.audience || "private",
+        title: s.title,
+        tripType: s.tripType,
+        summary: s.summary,
+        startDate: s.startDate,
+        endDate: s.endDate,
+        places: s.places || [],
+        highlights: s.highlights || [],
+        days: s.days || [],
+        destinations: s.destinations || [],
+        reactions: s.reactions || {},
+        createdAt: s.createdAt,
+      };
+    },
+    activeShareLink(localTripId) {
+      const db = this._db();
+      return (
+        db.shareLinks.find(
+          (s) => s.localTripId === localTripId && s.ownerId === db.meId && !s.revoked
+        ) || null
+      );
     },
     commentsFor(tripId) {
       return this._db()
@@ -482,7 +684,11 @@
     },
     reactTrip(tripId, emoji) {
       const db = this._db();
-      const t = db.publicTrips.find((x) => x.id === tripId);
+      let t = db.publicTrips.find((x) => x.id === tripId);
+      if (!t && String(tripId).startsWith("share:")) {
+        const tok = String(tripId).slice(6);
+        t = db.shareLinks.find((x) => x.token === tok && !x.revoked);
+      }
       if (!t) return;
       t.reactions = t.reactions || {};
       const arr = t.reactions[emoji] || [];
@@ -547,11 +753,18 @@
     },
     publishTrip(summary) {
       const db = this._db();
+      const audience = summary.audience || "public";
       const existing = db.publicTrips.find(
-        (t) => t.localTripId && t.localTripId === summary.localTripId
+        (t) => t.localTripId && t.localTripId === summary.localTripId && t.ownerId === db.meId
       );
       if (existing) {
-        Object.assign(existing, summary, { ownerId: db.meId, createdAt: existing.createdAt });
+        Object.assign(existing, summary, {
+          ownerId: db.meId,
+          audience,
+          createdAt: existing.createdAt,
+          days: summary.days || existing.days || [],
+          destinations: summary.destinations || existing.destinations || [],
+        });
         this._save(db);
         return existing;
       }
@@ -563,19 +776,34 @@
           createdAt: now(),
           highlights: [],
           places: [],
+          days: [],
+          destinations: [],
+          audience: "public",
         },
-        summary
+        summary,
+        { audience }
       );
       db.publicTrips.unshift(pt);
-      db.feed.unshift({
-        id: uid("f"),
-        type: "trip_update",
-        authorId: db.meId,
-        tripId: pt.id,
-        text: "Published “" + (pt.title || "trip") + "” — feedback welcome.",
-        createdAt: now(),
-        reactions: {},
-      });
+      const label =
+        audience === "public"
+          ? "Published"
+          : audience === "followers"
+            ? "Shared with followers"
+            : audience === "close"
+              ? "Shared with close friends"
+              : "Updated";
+      if (audience !== "private") {
+        db.feed.unshift({
+          id: uid("f"),
+          type: "trip_update",
+          authorId: db.meId,
+          tripId: pt.id,
+          audience,
+          text: label + " “" + (pt.title || "trip") + "” — feedback welcome.",
+          createdAt: now(),
+          reactions: {},
+        });
+      }
       this._save(db);
       return pt;
     },
@@ -587,6 +815,14 @@
       db.comments = db.comments.filter((c) => c.tripId !== pt.id);
       db.feed = db.feed.filter((f) => f.tripId !== pt.id);
       this._save(db);
+    },
+    setTripAudience(localTripId, audience) {
+      const db = this._db();
+      const pt = db.publicTrips.find((t) => t.localTripId === localTripId && t.ownerId === db.meId);
+      if (!pt) return null;
+      pt.audience = audience || "private";
+      this._save(db);
+      return pt;
     },
     threads() {
       const db = this._db();
@@ -728,6 +964,18 @@
       feed: () => local.feed(),
       publicTrips: () => local.publicTrips(),
       publicTrip: (id) => local.publicTrip(id),
+      circleTrips: () => local.circleTrips(),
+      canViewTrip: (...a) => local.canViewTrip(...a),
+      closeFriendIds: (...a) => local.closeFriendIds(...a),
+      setCloseFriends: (...a) => local.setCloseFriends(...a),
+      toggleCloseFriend: (...a) => local.toggleCloseFriend(...a),
+      shareLinksFor: (...a) => local.shareLinksFor(...a),
+      createShareLink: (...a) => local.createShareLink(...a),
+      revokeShareLink: (...a) => local.revokeShareLink(...a),
+      regenerateShareLink: (...a) => local.regenerateShareLink(...a),
+      tripByShareToken: (...a) => local.tripByShareToken(...a),
+      activeShareLink: (...a) => local.activeShareLink(...a),
+      setTripAudience: (...a) => local.setTripAudience(...a),
       commentsFor: (id) => local.commentsFor(id),
       addComment(tripId, text) {
         const c = local.addComment(tripId, text);

@@ -182,6 +182,16 @@ textarea{min-height:100px;resize:vertical}
 .demo-dismiss{width:40px;height:40px;border:none;background:transparent;border-radius:10px;color:var(--muted);font-size:20px;cursor:pointer;flex:0 0 40px;line-height:1}
 .badge-pub{background:var(--accent-soft);color:var(--accent)}
 .badge-priv{background:#eee;color:var(--muted)}
+.badge-close{background:#f3e8d8;color:#7a5a2e}
+.badge-followers{background:#e4eef6;color:#2a5570}
+.audience-ladder{display:flex;flex-direction:column;gap:8px;margin-top:12px}
+.audience-opt{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:12px;cursor:pointer;background:var(--bg)}
+.audience-opt.on{border-color:var(--accent);background:var(--accent-soft)}
+.audience-opt input{margin-top:3px;flex:0 0 auto}
+.audience-opt strong{display:block;font-size:13px}
+.fork-pick{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.fork-pick input{margin-top:3px}
+.share-url{font-size:12px;word-break:break-all;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin:8px 0}
 .soc-tabs{display:flex;gap:4px;overflow-x:auto;padding:4px;background:var(--paper);border-radius:999px;border:1px solid var(--line);margin:12px 0;scrollbar-width:none}
 .soc-tabs button{flex:0 0 auto;border:none;background:transparent;padding:8px 12px;min-height:40px;border-radius:999px;color:var(--muted);cursor:pointer;font-size:12px;font-weight:500}
 .soc-tabs button.on{background:var(--ink);color:#fff}
@@ -273,7 +283,7 @@ textarea{min-height:100px;resize:vertical}
 <script src="community.js"></script>
 <script>
 (function(){
-const VER="v4.1.1-polish";
+const VER="v4.2.0-share";
 const STORAGE="wikilogs_v3";
 const DEMO_BANNER_KEY="wikilogs_demo_banner_v1";
 const uid=p=>p+"_"+Math.random().toString(36).slice(2,9);
@@ -318,7 +328,7 @@ function emptyCamp(){return{water:"",power:"",ablution:"",surface:"",noise:"",pr
 function blankDay(o){const now=new Date();return Object.assign({id:uid("day"),date:now.toISOString().slice(0,10),time:now.toTimeString().slice(0,5),title:"",place:"",notes:"",photos:[],voice:null,story:null,lat:null,lng:null,campName:"",km:"",fuelNote:"",wildlife:"",kind:"note",poiType:"",campsite:emptyCamp(),stay:null},o||{});}
 function migrateEntry(d){if(!d||typeof d!=="object")return d;if(!Array.isArray(d.photos))d.photos=[];if(d.campName==null)d.campName="";if(d.km==null)d.km="";if(d.fuelNote==null)d.fuelNote="";if(d.wildlife==null)d.wildlife="";if(!d.kind){if(d.voice&&!d.notes&&!d.photos.length)d.kind="voice";else if(d.photos.length&&!d.notes&&!d.voice)d.kind="photo";else if(d.title==="Check-in"||d.kind==="checkin")d.kind="checkin";else d.kind="note";}if(d.poiType==null)d.poiType="";if(!d.campsite||typeof d.campsite!=="object")d.campsite=emptyCamp();else d.campsite=Object.assign(emptyCamp(),d.campsite);if(d.stay==null)d.stay=null;return d;}
 function migratePlace(d){if(!d||typeof d!=="object")return d;if(d.poiType==null)d.poiType="";if(!d.campsite||typeof d.campsite!=="object")d.campsite=emptyCamp();else d.campsite=Object.assign(emptyCamp(),d.campsite);if(!d.stay||typeof d.stay!=="object"){d.stay=null;}else d.stay=Object.assign(emptyStay(),d.stay);return d;}
-function migrateTrip(t){t.days=(t.days||[]).map(migrateEntry);t.destinations=(t.destinations||[]).map(migratePlace);t.storyline=t.storyline||[];t.trail=t.trail||[];t.expenses=t.expenses||[];if(t.isPublic==null)t.isPublic=false;if(!t.tripType)t.tripType="road";if(!Array.isArray(t.stays))t.stays=[];t.stays=t.stays.map(s=>Object.assign(emptyStay(),{id:s.id||uid("stay")},s));return t;}
+function migrateTrip(t){t.days=(t.days||[]).map(migrateEntry);t.destinations=(t.destinations||[]).map(migratePlace);t.storyline=t.storyline||[];t.trail=t.trail||[];t.expenses=t.expenses||[];if(t.isPublic==null)t.isPublic=false;if(!t.audience){t.audience=t.isPublic?"public":"private";}t.isPublic=t.audience==="public";if(!t.tripType)t.tripType="road";if(!Array.isArray(t.stays))t.stays=[];t.stays=t.stays.map(s=>Object.assign(emptyStay(),{id:s.id||uid("stay")},s));if(t.shareToken==null)t.shareToken=null;return t;}
 function oneLiner(s,n){s=String(s||"").replace(/\s+/g," ").trim();if(!s)return"";const cut=s.split(/(?<=[.!?])\s/)[0]||s;return cut.length>(n||110)?cut.slice(0,n||110).trim()+"…":cut;}
 function daySpend(t,date){return(t.expenses||[]).filter(e=>e.date===date).reduce((s,e)=>s+Number(e.amount||0),0);}
 function campFieldsHTML(c,prefix){c=c||{};const sel=(id,opts,val)=>`<select id="${prefix}${id}">${opts.map(o=>`<option value="${esc(o)}" ${String(val||"")===o?"selected":""}>${o||"—"}</option>`).join("")}</select>`;return `<div class="camp-grid">
@@ -343,7 +353,7 @@ function findDayBucket(t,date){const days=(t.days||[]).filter(d=>d.date===date);
 function upsertPlace(t,p){t.destinations=t.destinations||[];const key=(p.name||"").trim().toLowerCase();let d=key?t.destinations.find(x=>(x.name||"").trim().toLowerCase()===key):null;if(!d&&p.lat!=null)d=t.destinations.find(x=>x.lat!=null&&Math.abs(x.lat-p.lat)<0.002&&Math.abs((x.lng||0)-(p.lng||0))<0.002);if(!d){d=migratePlace({id:uid("d"),name:p.name||"Stop",country:p.country||"",notes:p.notes||"",lat:p.lat??null,lng:p.lng??null,poiType:p.poiType||"",campsite:p.campsite||emptyCamp()});t.destinations.push(d);}else{if(p.poiType)d.poiType=p.poiType;if(p.campsite)d.campsite=Object.assign(emptyCamp(),d.campsite||{},p.campsite);if(p.lat!=null){d.lat=p.lat;d.lng=p.lng;}if(p.notes)d.notes=p.notes;}return d;}
 
 
-function sampleCamper(){const pack=packingForType("camper");return{id:uid("t"),name:"Namibia — Kaokoland chapter",startDate:"2026-09-01",endDate:"2026-09-18",summary:"A multi-modal holiday: Cape Town flight into Windhoek, then gravel north to Opuwo and Epupa Falls — Himba country, Kunene spray.",currency:"NAD",budget:25000,cover:null,bookLayout:"balanced",viewMode:"magazine",tripType:"camper",isPublic:false,
+function sampleCamper(){const pack=packingForType("camper");return{id:uid("t"),name:"Namibia — Kaokoland chapter",startDate:"2026-09-01",endDate:"2026-09-18",summary:"A multi-modal holiday: Cape Town flight into Windhoek, then gravel north to Opuwo and Epupa Falls — Himba country, Kunene spray.",currency:"NAD",budget:25000,cover:null,bookLayout:"balanced",viewMode:"magazine",tripType:"camper",isPublic:false,audience:"private",
 destinations:[{id:uid("d"),name:"Windhoek",country:"Namibia",notes:"Arrival hub",lat:-22.56,lng:17.08,poiType:"airport",campsite:emptyCamp(),stay:null},{id:uid("d"),name:"Opuwo",country:"Namibia",notes:"Last reliable fuel north.",lat:-18.06,lng:13.84,poiType:"fuel",campsite:emptyCamp(),stay:null},{id:uid("d"),name:"Epupa Falls",country:"Namibia",notes:"Kunene River.",lat:-17.0,lng:13.25,poiType:"camp",campsite:{water:"yes",power:"camp",ablution:"good",surface:"gravel",noise:"moderate",price:"320 NAD",wildlifeRisk:"medium",braai:"yes"},stay:{name:"Omarunga",type:"camp",checkIn:"2026-09-08",checkOut:"2026-09-10",rating:5,review:"Falls soundtrack all night.",amenities:"braai, shade"}}],
 legs:[{id:uid("l"),mode:"flight",from:"Cape Town",to:"Windhoek",notes:""},{id:uid("l"),mode:"car",from:"Windhoek",to:"Opuwo",notes:"C43"}],
 packing:pack.items,packingName:pack.name,
@@ -353,7 +363,7 @@ days:[
   blankDay({date:"2026-09-02",time:"18:40",title:"Dust and diesel",place:"Outjo",campName:"Namib Wilde",km:380,fuelNote:"Full in Outjo",wildlife:"Kudu at dusk",notes:"Gravel started after the last tar. Camp quiet, braai smoke, first jackals.",kind:"note",poiType:"camp",campsite:{water:"yes",power:"none",ablution:"basic",surface:"sand",noise:"quiet",price:"180 NAD",wildlifeRisk:"low",braai:"yes"}}),
   blankDay({date:"2026-09-08",time:"16:10",title:"Kunene spray",place:"Epupa Falls",campName:"Omarunga",km:210,fuelNote:"",wildlife:"Crocodiles below the falls",notes:"Himba market in the morning, then the river. Sleep to the sound of the falls.",kind:"note",poiType:"camp",campsite:{water:"yes",power:"camp",ablution:"good",surface:"gravel",noise:"moderate",price:"320 NAD",wildlifeRisk:"medium",braai:"yes"}})
 ],expenses:[],bookings:[],docs:[],trail:[],storyline:[],createdAt:new Date().toISOString()};}
-function sampleCity(){const pack=packingForType("city");return{id:uid("t"),name:"Lisbon city break",startDate:"2026-10-03",endDate:"2026-10-06",summary:"Trams, miradouros, and long lunches in Alfama — a soft long weekend.",currency:"EUR",budget:1200,cover:null,bookLayout:"balanced",viewMode:"magazine",tripType:"city",isPublic:false,
+function sampleCity(){const pack=packingForType("city");return{id:uid("t"),name:"Lisbon city break",startDate:"2026-10-03",endDate:"2026-10-06",summary:"Trams, miradouros, and long lunches in Alfama — a soft long weekend.",currency:"EUR",budget:1200,cover:null,bookLayout:"balanced",viewMode:"magazine",tripType:"city",isPublic:false,audience:"private",
 destinations:[{id:uid("d"),name:"Lisbon Airport",country:"Portugal",notes:"",lat:38.77,lng:-9.13,poiType:"airport",campsite:emptyCamp(),stay:null},{id:uid("d"),name:"Alfama",country:"Portugal",notes:"Stay base",lat:38.71,lng:-9.13,poiType:"hotel",campsite:emptyCamp(),stay:{name:"Casa do Castelo",type:"airbnb",checkIn:"2026-10-03",checkOut:"2026-10-06",rating:0,review:"",amenities:"wifi, kitchen"}},{id:uid("d"),name:"Belém",country:"Portugal",notes:"Pastéis & tower",lat:38.7,lng:-9.2,poiType:"attraction",campsite:emptyCamp(),stay:null}],
 legs:[{id:uid("l"),mode:"flight",from:"Home",to:"Lisbon",notes:""}],
 packing:pack.items,packingName:pack.name,pretrip:preForType("city"),
@@ -363,7 +373,7 @@ expenses:[],bookings:[{id:uid("b"),type:"hotel",title:"Casa do Castelo",ref:"CDC
 function sample(){return sampleCamper();}
 
 let S={trips:[],lists:TPL.map(t=>({id:t.id,name:t.name,items:t.items.map(i=>({id:uid("i"),cat:i.c,name:i.n}))})),screen:"home",tripId:null,tab:"story",map:null,watching:false,watchId:null,
-  communityTab:"feed",socView:null,socTripId:null,socProfileId:null,dmThreadId:null,dmOtherId:null,_tripTypePick:"city"};
+  communityTab:"feed",socView:null,socTripId:null,socProfileId:null,dmThreadId:null,dmOtherId:null,_tripTypePick:"city",shareToken:null,forkSel:{days:{},stops:{}}};
 
 function load(){try{let r=localStorage.getItem(STORAGE);if(!r)r=localStorage.getItem("waybook_v3");if(!r)r=localStorage.getItem("waybook_v2");if(r){const p=JSON.parse(r);S.trips=p.trips||[];if(p.lists?.length)S.lists=p.lists;}}catch(e){}
 if(!S.trips.length){S.trips=[sampleCamper(),sampleCity()];}
@@ -397,7 +407,44 @@ function allStoryClips(t){
 function hav(a,b){const R=6371,r=x=>x*Math.PI/180;const dLat=r(b.lat-a.lat),dLng=r(b.lng-a.lng);const x=Math.sin(dLat/2)**2+Math.cos(r(a.lat))*Math.cos(r(b.lat))*Math.sin(dLng/2)**2;return 2*R*Math.asin(Math.sqrt(x));}
 
 function C(){return window.WikilogsCommunity?WikilogsCommunity.adapter():null;}
-function privacyBadge(t){return t&&t.isPublic?`<span class="badge badge-pub">Public</span>`:`<span class="badge badge-priv">Private</span>`;}
+const AUDIENCE_META={
+  private:{label:"Private",cls:"badge-priv",hint:"Only you — share link optional"},
+  close:{label:"Close friends",cls:"badge-close",hint:"Visible to your close-friends circle"},
+  followers:{label:"Followers",cls:"badge-followers",hint:"People who follow you"},
+  public:{label:"Public",cls:"badge-pub",hint:"Discover + anyone"}
+};
+function tripAudience(t){if(!t)return"private";return t.audience||(t.isPublic?"public":"private");}
+function privacyBadge(t){
+  const a=tripAudience(t);const m=AUDIENCE_META[a]||AUDIENCE_META.private;
+  return`<span class="badge ${m.cls}">${m.label}</span>`;
+}
+function forkSnapshotFromLocal(t){
+  const days=(t.days||[]).map(d=>({
+    id:d.id,date:d.date||"",title:d.title||"",place:d.place||"",notes:d.notes||"",
+    poiType:d.poiType||"",kind:d.kind||"note",campName:d.campName||"",
+    photos:[],voice:null,story:null
+  }));
+  const destinations=(t.destinations||[]).map(d=>({
+    id:d.id,name:d.name||"",country:d.country||"",notes:d.notes||"",
+    lat:d.lat??null,lng:d.lng??null,poiType:d.poiType||"",
+    campsite:d.campsite?Object.assign({},d.campsite):emptyCamp(),stay:null
+  }));
+  return{
+    places:destinations.map(d=>d.name).filter(Boolean),
+    highlights:(t.days||[]).filter(d=>d.title||d.notes).slice(0,5).map(d=>d.title||oneLiner(d.notes,80)),
+    days,destinations
+  };
+}
+function shareLinkUrl(token){
+  const base=location.href.split("#")[0].split("?")[0];
+  return base+"#share="+encodeURIComponent(token);
+}
+function parseShareHash(){
+  const h=(location.hash||"").replace(/^#/,"");
+  if(h.startsWith("share="))return decodeURIComponent(h.slice(6));
+  const m=h.match(/(?:^|&)share=([^&]+)/);
+  return m?decodeURIComponent(m[1]):null;
+}
 function demoBanner(){
   const demo=!window.WikilogsCommunity||WikilogsCommunity.isDemo();
   if(!demo)return"";
@@ -462,6 +509,7 @@ function communityView(){
   const a=C();
   if(!a){return`<div class="top"><div class="logo">Community</div></div><div class="empty">Community module missing</div>`;}
   if(S.socView==="publicTrip")return publicTripView(S.socTripId);
+  if(S.socView==="shareTrip")return shareTripView(S.shareToken);
   if(S.socView==="profile")return profileView(S.socProfileId);
   if(S.socView==="dm")return dmThreadView();
   const tabs=[["feed","Feed"],["discover","Discover"],["reviews","Reviews"],["people","People"],["messages","Messages"],["me","Me"]];
@@ -485,15 +533,27 @@ function feedHTML(a){
   return items.map(f=>{
     const w=whoLine(f.authorId);
     const reacts=Object.entries(f.reactions||{}).filter(([,ids])=>ids.length).map(([e,ids])=>`<button class="react-btn ${ids.includes(a.me().id)?"on":""}" data-react-feed="${f.id}" data-emoji="${esc(e)}">${e} ${ids.length}</button>`).join("");
+    const pt=f.tripId&&a.publicTrip?a.publicTrip(f.tripId):null;
+    const audBadge=pt?privacyBadge(pt):"";
     const open=f.tripId?`<button class="btn btn-ghost btn-sm" data-open-pub="${f.tripId}">Open trip</button>`:"";
-    return`<div class="feed-card"><div class="who"><div class="avatar">${w.avatar}</div><div><strong data-open-profile="${f.authorId}" style="cursor:pointer">${esc(w.name)}</strong><div class="meta">${esc((f.createdAt||"").slice(0,10))}</div></div></div>
+    return`<div class="feed-card"><div class="who"><div class="avatar">${w.avatar}</div><div><strong data-open-profile="${f.authorId}" style="cursor:pointer">${esc(w.name)}</strong><div class="meta">${esc((f.createdAt||"").slice(0,10))} ${audBadge}</div></div></div>
     <p>${esc(f.text)}</p>
     <div class="react-row">${reacts}<button class="react-btn" data-react-feed="${f.id}" data-emoji="❤️">❤️</button><button class="react-btn" data-react-feed="${f.id}" data-emoji="👏">👏</button>${open}</div></div>`;
   }).join("");
 }
 function discoverHTML(a){
   const trips=a.publicTrips();
-  return`<p class="meta" style="margin-bottom:10px">Browse public trips — comment and react.</p>`+trips.map(t=>{
+  const circle=(a.circleTrips?a.circleTrips():trips).filter(t=>(t.audience||"public")!=="public"&&t.ownerId!==a.me().id);
+  const circleBlock=circle.length?`<div class="panel" style="margin-bottom:14px"><strong>Shared with you</strong>
+  <p class="meta" style="margin:6px 0 10px">Close friends & followers — not on Discover.</p>
+  ${circle.map(t=>{
+    const w=whoLine(t.ownerId);const tt=tripTypeMeta(t.tripType);
+    return`<button class="trip-card" data-open-pub="${t.id}" style="margin-bottom:8px"><div class="body">
+    <h3>${esc(t.title)}</h3>
+    <div class="meta">${w.avatar} ${esc(w.name)} · ${tt?esc(tt.icon+" "+tt.label):"Trip"} · ${privacyBadge(t)}</div>
+    <div class="meta">${esc(oneLiner(t.summary,100))}</div></div></button>`;
+  }).join("")}</div>`:"";
+  return circleBlock+`<p class="meta" style="margin-bottom:10px">Browse public trips — comment, react, or fork days into your draft.</p>`+trips.map(t=>{
     const w=whoLine(t.ownerId);
     const tt=tripTypeMeta(t.tripType);
     const rc=Object.values(t.reactions||{}).reduce((n,arr)=>n+arr.length,0);
@@ -567,6 +627,14 @@ function meHTML(a){
   <div class="field"><label>Bio</label><textarea id="meBio">${esc(me.bio||"")}</textarea></div>
   <div class="field"><label>Avatar emoji</label><input id="meAv" value="${esc(me.avatar||"🌿")}"/></div>
   <button class="btn btn-sm" id="meSave">Save profile</button></div>
+  <div class="panel"><strong>Close friends</strong>
+  <p class="meta" style="margin:8px 0">Trips set to “Close friends” are visible only to this circle (demo-local). Not on Discover unless Public.</p>
+  ${a.travelers().filter(p=>p.id!==me.id).map(p=>{
+    const on=(a.closeFriendIds?a.closeFriendIds():[]).includes(p.id);
+    return`<label class="audience-opt ${on?"on":""}" style="margin-bottom:6px"><input type="checkbox" data-cf="${p.id}" ${on?"checked":""}/>
+    <span><strong>${esc(p.avatar||"👤")} ${esc(p.displayName)}</strong><span class="meta"> ${esc(p.homeBase||"")}</span></span></label>`;
+  }).join("")||'<p class="meta">No other travelers in demo</p>'}
+  <button class="btn btn-sm" id="cfSave" style="margin-top:8px">Save close friends</button></div>
   <div class="panel"><strong>Supabase (optional)</strong>
   <p class="meta" style="margin:8px 0">Leave blank to stay on the demo community. Set URL + anon key to attempt live sync.</p>
   <div class="field"><label>Project URL</label><input id="sbUrl" value="${esc(cfg.url||"")}" placeholder="https://xxxx.supabase.co"/></div>
@@ -576,24 +644,56 @@ function meHTML(a){
   <button class="btn btn-ghost btn-sm" id="sbReset">Reset demo data</button></div>
   ${demoNote()}</div>`;
 }
-function publicTripView(id){
-  const a=C();const t=a&&a.publicTrip(id);
-  if(!t)return`<div class="top"><button class="icon-btn" id="socBack">←</button><div class="logo">Trip</div></div><div class="empty">Not found</div>`;
-  const w=whoLine(t.ownerId);const tt=tripTypeMeta(t.tripType);
-  const comments=a.commentsFor(t.id);
-  const reacts=Object.entries(t.reactions||{}).filter(([,ids])=>ids.length).map(([e,ids])=>`<button class="react-btn ${ids.includes(a.me().id)?"on":""}" data-react-trip="${t.id}" data-emoji="${esc(e)}">${e} ${ids.length}</button>`).join("");
-  return`<div class="top"><button class="icon-btn" id="socBack">←</button><div class="logo">Public trip</div>${privacyBadge({isPublic:true})}</div>
+function sharedTripBody(t,opts){
+  opts=opts||{};
+  const a=C();const w=whoLine(t.ownerId);const tt=tripTypeMeta(t.tripType);
+  const tripKey=t.id;
+  const comments=a.commentsFor(tripKey);
+  const reacts=Object.entries(t.reactions||{}).filter(([,ids])=>ids.length).map(([e,ids])=>`<button class="react-btn ${ids.includes(a.me().id)?"on":""}" data-react-trip="${esc(tripKey)}" data-emoji="${esc(e)}">${e} ${ids.length}</button>`).join("");
+  const days=t.days||[];
+  const dests=t.destinations||[];
+  const sel=S.forkSel||{days:{},stops:{}};
+  const dayPick=days.length?`<div class="panel"><strong>Days — fork into your trip</strong>
+  <p class="meta" style="margin:6px 0 8px">Select days and/or stops, then Add to my draft trip.</p>
+  ${days.map(d=>{
+    const on=!!sel.days[d.id];
+    return`<label class="fork-pick"><input type="checkbox" data-fork-day="${esc(d.id)}" ${on?"checked":""}/>
+    <span><strong>${esc(d.date||"")} · ${esc(d.title||d.place||"Day")}</strong>
+    <div class="meta">${esc(oneLiner(d.notes,100))}</div></span></label>`;
+  }).join("")}
+  ${(dests.length?`<div style="margin-top:10px"><strong class="meta">Stops / places</strong></div>`:"")}
+  ${dests.map(d=>{
+    const on=!!sel.stops[d.id];
+    return`<label class="fork-pick"><input type="checkbox" data-fork-stop="${esc(d.id)}" ${on?"checked":""}/>
+    <span><strong>${esc(d.name)}</strong> ${d.poiType?`<span class="tag">${esc(poiLabel(d.poiType))}</span>`:""}
+    <div class="meta">${esc(d.country||"")}</div></span></label>`;
+  }).join("")}
+  <button class="btn btn-sm" id="btnForkTrip" style="margin-top:12px">Add to my draft trip</button>
+  </div>`:(dests.length||(t.places||[]).length?`<div class="panel"><strong>Fork this trip</strong>
+  <p class="meta" style="margin:6px 0 8px">Copy places into a new private draft.</p>
+  ${(dests.length?dests:((t.places||[]).map((n,i)=>({id:"pl_"+i,name:n})))).map(d=>{
+    const on=!!sel.stops[d.id];
+    return`<label class="fork-pick"><input type="checkbox" data-fork-stop="${esc(d.id)}" ${on?"checked":""}/>
+    <span><strong>${esc(d.name)}</strong></span></label>`;
+  }).join("")}
+  <button class="btn btn-sm" id="btnForkTrip" style="margin-top:12px">Add to my draft trip</button></div>`:`<div class="panel"><strong>Fork</strong>
+  <p class="meta" style="margin:6px 0 8px">No day/stop structure yet — you can still start a draft from the summary.</p>
+  <button class="btn btn-sm" id="btnForkTrip">Add to my draft trip</button></div>`);
+  const backId=opts.backId||"socBack";
+  const title=opts.title||"Shared trip";
+  return`<div class="top"><button class="icon-btn" id="${backId}">←</button><div class="logo">${esc(title)}</div>${privacyBadge(t)}</div>
   <div class="hero-cover slim"><div class="inner"><div class="kicker">${tt?esc(tt.icon+" "+tt.label):"Trip"} · ${esc(w.name)}</div>
   <h1 class="display" style="font-size:1.8rem">${esc(t.title)}</h1>
   <p class="lede">${esc(t.summary||"")}</p>
   <div class="chip">${esc([t.startDate,t.endDate].filter(Boolean).join(" → "))}</div></div></div>
   <div class="section pub-view">
-  <div class="panel"><strong>Places</strong><div class="meta" style="margin-top:6px">${esc((t.places||[]).join(" · ")||"—")}</div></div>
+  <div class="panel"><strong>Places</strong><div class="meta" style="margin-top:6px">${esc((t.places||[]).join(" · ")||(dests.map(d=>d.name).join(" · "))||"—")}</div></div>
   <div class="panel"><strong>Highlights</strong>${(t.highlights||[]).map(h=>`<div class="highlight">· ${esc(h)}</div>`).join("")||'<p class="meta">—</p>'}</div>
+  ${dayPick}
   <div class="panel"><strong>Reactions</strong><div class="react-row" style="margin-top:8px">${reacts}
-  <button class="react-btn" data-react-trip="${t.id}" data-emoji="❤️">❤️</button>
-  <button class="react-btn" data-react-trip="${t.id}" data-emoji="🔥">🔥</button>
-  <button class="react-btn" data-react-trip="${t.id}" data-emoji="👏">👏</button></div></div>
+  <button class="react-btn" data-react-trip="${esc(tripKey)}" data-emoji="❤️">❤️</button>
+  <button class="react-btn" data-react-trip="${esc(tripKey)}" data-emoji="🔥">🔥</button>
+  <button class="react-btn" data-react-trip="${esc(tripKey)}" data-emoji="👏">👏</button></div></div>
   <div class="panel"><strong>Feedback on this trip</strong>
   <div id="commentList">${comments.map(c=>{const cw=whoLine(c.authorId);return`<div class="comment"><strong>${esc(cw.name)}</strong> <span class="meta">${esc((c.createdAt||"").slice(0,16).replace("T"," "))}</span><p>${esc(c.text)}</p></div>`;}).join("")||'<p class="meta">No comments yet — be the first.</p>'}</div>
   <div class="field" style="margin-top:10px"><label>Comment</label><textarea id="cmtText" placeholder="Ask a question or leave a tip…"></textarea></div>
@@ -601,6 +701,21 @@ function publicTripView(id){
   <div class="row" style="margin-top:12px"><button class="btn btn-ghost btn-sm" data-open-profile="${t.ownerId}">View ${esc(w.name)}</button>
   <button class="btn btn-ghost btn-sm" data-dm="${t.ownerId}">Message</button></div>
   </div>`;
+}
+function publicTripView(id){
+  const a=C();const t=a&&a.publicTrip(id);
+  if(!t)return`<div class="top"><button class="icon-btn" id="socBack">←</button><div class="logo">Trip</div></div><div class="empty">Not found</div>`;
+  if(a.canViewTrip&&!a.canViewTrip(t))return`<div class="top"><button class="icon-btn" id="socBack">←</button><div class="logo">Trip</div></div><div class="empty">This trip isn’t shared with you</div>`;
+  S.forkSource=t;
+  return sharedTripBody(t,{title:(tripAudience(t)==="public"?"Public trip":"Shared trip")});
+}
+function shareTripView(token){
+  const a=C();const t=a&&a.tripByShareToken&&a.tripByShareToken(token);
+  if(!t)return`<div class="top"><button class="icon-btn" id="socBackShare">←</button><div class="logo">Shared link</div></div>
+  <div class="empty"><div class="ill">🔗</div><p>This share link is invalid or was revoked.</p>
+  <button class="btn btn-sm" id="socBackShare2">Back home</button></div>`;
+  S.forkSource=t;S.socTripId=t.id;
+  return sharedTripBody(t,{title:"Shared link",backId:"socBackShare"});
 }
 function profileView(id){
   const a=C();const p=a&&a.profile(id);
@@ -631,6 +746,33 @@ function dmThreadView(){
   <div class="dm-compose"><input id="dmText" placeholder="Message…" style="flex:1"/><button class="btn btn-sm" id="dmSend">Send</button></div>`;
 }
 
+function shareCirclePanel(t){
+  const aud=tripAudience(t);
+  const a=C();
+  const link=a&&a.activeShareLink?a.activeShareLink(t.id):null;
+  const url=link?shareLinkUrl(link.token):"";
+  const opts=["private","close","followers","public"].map(id=>{
+    const m=AUDIENCE_META[id];
+    return`<label class="audience-opt ${aud===id?"on":""}"><input type="radio" name="aud" value="${id}" ${aud===id?"checked":""}/>
+    <span><strong>${m.label}</strong><span class="meta"> — ${m.hint}</span></span></label>`;
+  }).join("");
+  return`<div class="panel">
+  <div class="row-between"><div><strong>Share Circle</strong><div class="meta" style="margin-top:4px">Private by default. Ladder who can see this trip in Community.</div></div>${privacyBadge(t)}</div>
+  <div class="audience-ladder">${opts}</div>
+  <div class="row" style="margin-top:12px">
+  <button class="btn btn-sm" id="btnSaveAudience">Save audience</button>
+  ${aud==="public"?`<button class="btn btn-ghost btn-sm" id="btnUpdatePublic">Update Discover page</button>`:""}
+  </div>
+  <hr style="border:none;border-top:1px solid var(--line);margin:16px 0"/>
+  <strong>Private share link</strong>
+  <p class="meta" style="margin:6px 0 8px">Recipients can view, comment & react without publishing to Discover. Stored in the demo social store (Supabase later).</p>
+  ${link?`<div class="share-url" id="shareUrlText">${esc(url)}</div>
+  <div class="row"><button class="btn btn-sm btn-soft" id="btnCopyShare">Copy link</button>
+  <button class="btn btn-ghost btn-sm" id="btnRegenShare">Regenerate</button>
+  <button class="btn btn-ghost btn-sm" id="btnRevokeShare">Revoke</button></div>`:
+  `<button class="btn btn-sm btn-soft" id="btnCreateShare">Create share link</button>`}
+  </div>`;
+}
 function tripView(t){
   const mode=t.viewMode||"magazine";
   const tabs=[["story","Story"],["map","Map"],["log","Journal"],["pack","Pack"],["spend","Spend"],["docs","Docs"],["book","Book"]];
@@ -709,13 +851,7 @@ function tabStory(t){
   <option value="guide" ${t.bookLayout==="guide"?"selected":""}>Guide mode</option></select></div>
   <button class="btn" id="ovSave">Save story</button>
   </div>
-  <div class="panel">
-  <div class="row-between"><div><strong>Community</strong><div class="meta" style="margin-top:4px">Default private. Public trips appear in Discover with comments.</div></div>${privacyBadge(t)}</div>
-  <div class="row" style="margin-top:12px">
-  <button class="btn btn-sm ${t.isPublic?"":"btn-soft"}" id="btnMakePublic">${t.isPublic?"Update public page":"Make trip public"}</button>
-  ${t.isPublic?`<button class="btn btn-ghost btn-sm" id="btnMakePrivate">Make private</button>`:""}
-  </div>
-  </div>
+  ${shareCirclePanel(t)}
   <div class="panel"><div class="row-between"><h3 class="section-title" style="font-size:1.2rem;margin:0">Stays</h3>
   <button class="btn btn-sm btn-soft" id="addStay">+ Stay</button></div>
   <ul class="list">${(t.stays||[]).map(s=>`<li><div style="flex:1"><strong>${esc(s.name)}</strong> <span class="tag">${esc(s.type)}</span>
@@ -1634,21 +1770,83 @@ function buildNewTrip(opts){
   const pack=opts.list?{name:opts.list.name,items:opts.list.items.map(i=>({id:uid("p"),cat:i.cat,name:i.name,done:false}))}:packingForType(typeId);
   const nt={id:uid("t"),name:opts.name||"Untitled",startDate:opts.startDate||"",endDate:opts.endDate||"",
     summary:"",currency:opts.currency||"USD",budget:0,cover:null,bookLayout:"balanced",viewMode:"magazine",
-    tripType:typeId,isPublic:false,destinations:[],legs:[],bookings:[],docs:[],trail:[],storyline:[],stays:[],
+    tripType:typeId,isPublic:false,audience:"private",shareToken:null,destinations:[],legs:[],bookings:[],docs:[],trail:[],storyline:[],stays:[],
     pretrip:preForType(typeId),packing:pack.items,packingName:pack.name,days:[],expenses:[],createdAt:new Date().toISOString()};
   return migrateTrip(nt);
 }
-function publishLocalTrip(t){
+function publishLocalTrip(t,audience){
   const a=C();if(!a||!t)return;
-  const highlights=(t.days||[]).filter(d=>d.title||d.notes).slice(0,5).map(d=>d.title||oneLiner(d.notes,80));
+  const aud=audience||tripAudience(t);
+  if(aud==="private"){
+    if(t.publicId&&a.unpublishTrip)a.unpublishTrip(t.id);
+    t.isPublic=false;t.audience="private";t.publicId=null;save();
+    return null;
+  }
+  const snap=forkSnapshotFromLocal(t);
   const pt=a.publishTrip({
     localTripId:t.id,title:t.name,tripType:t.tripType||"road",summary:t.summary||"",
     startDate:t.startDate,endDate:t.endDate,
-    places:(t.destinations||[]).map(d=>d.name).filter(Boolean),
-    highlights
+    places:snap.places,highlights:snap.highlights,
+    days:snap.days,destinations:snap.destinations,
+    audience:aud
   });
-  t.isPublic=true;t.publicId=pt.id;save();
+  t.audience=aud;t.isPublic=aud==="public";t.publicId=pt.id;save();
   return pt;
+}
+function createOrRefreshShareLink(t){
+  const a=C();if(!a||!t)return null;
+  const snap=forkSnapshotFromLocal(t);
+  const link=a.createShareLink({
+    localTripId:t.id,publishedTripId:t.publicId||null,
+    audience:tripAudience(t),title:t.name,tripType:t.tripType||"road",
+    summary:t.summary||"",startDate:t.startDate,endDate:t.endDate,
+    places:snap.places,highlights:snap.highlights,days:snap.days,destinations:snap.destinations
+  });
+  t.shareToken=link.token;save();
+  return link;
+}
+function forkIntoDraft(source){
+  if(!source){toast("Nothing to fork");return;}
+  const sel=S.forkSel||{days:{},stops:{}};
+  const dayIds=Object.keys(sel.days||{}).filter(k=>sel.days[k]);
+  const stopIds=Object.keys(sel.stops||{}).filter(k=>sel.stops[k]);
+  const allDays=source.days||[];
+  const allStops=source.destinations||[];
+  let pickDays=allDays.filter(d=>dayIds.includes(d.id));
+  let pickStops=allStops.filter(d=>stopIds.includes(d.id));
+  if(!pickDays.length&&!pickStops.length){
+    // nothing selected → copy everything available
+    pickDays=allDays.slice();
+    pickStops=allStops.length?allStops.slice():(source.places||[]).map((n,i)=>({id:"pl_"+i,name:n,country:"",poiType:"",notes:""}));
+  }
+  const nt=buildNewTrip({
+    name:"Fork · "+(source.title||"Trip"),
+    tripType:source.tripType||"city",
+    startDate:source.startDate||"",
+    endDate:source.endDate||""
+  });
+  nt.summary=source.summary||"";
+  nt.audience="private";nt.isPublic=false;
+  nt.days=pickDays.map(d=>blankDay({
+    date:d.date||"",title:d.title||"",place:d.place||"",notes:d.notes||"",
+    poiType:d.poiType||"",kind:d.kind||"note",campName:d.campName||"",
+    photos:[],voice:null,story:null
+  }));
+  nt.destinations=pickStops.map(d=>migratePlace({
+    id:uid("d"),name:d.name||"",country:d.country||"",notes:d.notes||"",
+    lat:d.lat??null,lng:d.lng??null,poiType:d.poiType||"",
+    campsite:d.campsite?Object.assign(emptyCamp(),d.campsite):emptyCamp(),stay:null
+  }));
+  if(!nt.destinations.length&&(source.places||[]).length&&!pickDays.length){
+    nt.destinations=(source.places||[]).map(n=>migratePlace({id:uid("d"),name:n,country:"",notes:"",poiType:"",campsite:emptyCamp(),stay:null}));
+  }
+  S.trips.unshift(nt);save();
+  S.forkSel={days:{},stops:{}};S.forkSource=null;
+  S.tripId=nt.id;S.screen="trip";S.tab="log";
+  S.socView=null;S.shareToken=null;S.socTripId=null;
+  if(location.hash&&location.hash.indexOf("share=")>=0)history.replaceState(null,"",location.pathname+location.search);
+  render();
+  toast("Added to your draft trip");
 }
 function stayEditor(existing){
   const s=existing||emptyStay();
@@ -1981,20 +2179,46 @@ function bind(){
     patch(t=>{t.name=document.getElementById("ovName").value.trim()||t.name;t.startDate=document.getElementById("ovStart").value;t.endDate=document.getElementById("ovEnd").value;
       t.currency=document.getElementById("ovCur").value;t.budget=+document.getElementById("ovBud").value||0;t.summary=document.getElementById("ovSum").value;t.cover=cover;t.bookLayout=document.getElementById("ovLayout").value;
       const nt=document.getElementById("ovType")?.value;if(nt){t.tripType=nt;if(nt!==prevType&&confirm("Load packing + pre-trip template for this trip type?")){const pack=packingForType(nt);t.packing=pack.items;t.packingName=pack.name;t.pretrip=preForType(nt);}}
-      if(t.isPublic)publishLocalTrip(t);
+      if(tripAudience(t)!=="private")publishLocalTrip(t,tripAudience(t));
     });
     toast("Saved");
   });
-  document.getElementById("btnMakePublic")?.addEventListener("click",()=>{
+  document.getElementById("btnSaveAudience")?.addEventListener("click",()=>{
     const t=T();if(!t)return;
-    if(!(t.summary||"").trim()&&!confirm("Publish without a story summary?"))return;
-    publishLocalTrip(t);render();toast("Trip is public in Community → Discover");
+    const picked=(document.querySelector('input[name="aud"]:checked')||{}).value||"private";
+    if(picked==="public"&&!(t.summary||"").trim()&&!confirm("Publish to Discover without a story summary?"))return;
+    if(picked==="close"){
+      const a=C();const n=a&&a.closeFriendIds?a.closeFriendIds().length:0;
+      if(!n&&!confirm("Your close-friends list is empty — manage it in Community → Me?"))return;
+    }
+    publishLocalTrip(t,picked);
+    const m=AUDIENCE_META[picked]||AUDIENCE_META.private;
+    toast(picked==="public"?"On Discover · Public":picked==="private"?"Private — only you":"Share Circle · "+m.label);
+    render();
   });
-  document.getElementById("btnMakePrivate")?.addEventListener("click",()=>{
+  document.getElementById("btnUpdatePublic")?.addEventListener("click",()=>{
+    const t=T();if(!t)return;publishLocalTrip(t,"public");toast("Discover page updated");render();
+  });
+  document.getElementById("btnCreateShare")?.addEventListener("click",()=>{
+    const t=T();if(!t)return;createOrRefreshShareLink(t);toast("Share link created");render();
+  });
+  document.getElementById("btnCopyShare")?.addEventListener("click",async()=>{
+    const el=document.getElementById("shareUrlText");const url=el?el.textContent.trim():"";
+    if(!url)return;
+    try{if(navigator.clipboard)await navigator.clipboard.writeText(url);else{const i=document.createElement("input");i.value=url;document.body.appendChild(i);i.select();document.execCommand("copy");i.remove();}}
+    catch(e){}
+    toast("Link copied");
+  });
+  document.getElementById("btnRegenShare")?.addEventListener("click",()=>{
+    const t=T();if(!t)return;if(!confirm("Regenerate? The old link will stop working."))return;
+    createOrRefreshShareLink(t);toast("New share link ready");render();
+  });
+  document.getElementById("btnRevokeShare")?.addEventListener("click",()=>{
     const t=T();if(!t)return;const a=C();
-    if(a&&t.id)a.unpublishTrip(t.id);
-    patch(tr=>{tr.isPublic=false;tr.publicId=null;});
-    toast("Trip is private");
+    const link=a&&a.activeShareLink?a.activeShareLink(t.id):null;
+    if(link)a.revokeShareLink(link.token);
+    patch(tr=>{tr.shareToken=null;});
+    toast("Share link revoked");
   });
   document.getElementById("addStay")?.addEventListener("click",()=>stayEditor(null));
   document.querySelectorAll("[data-del-stay]").forEach(b=>b.onclick=()=>patch(t=>t.stays=(t.stays||[]).filter(s=>s.id!==b.dataset.delStay)));
@@ -2188,7 +2412,7 @@ function bind(){
 
   /* Community bindings */
   document.querySelectorAll("[data-soc-tab]").forEach(b=>b.onclick=()=>{S.communityTab=b.dataset.socTab;S.socView=null;render();});
-  document.querySelectorAll("[data-open-pub]").forEach(b=>b.onclick=()=>{S.screen="community";S.socView="publicTrip";S.socTripId=b.dataset.openPub;render();});
+  document.querySelectorAll("[data-open-pub]").forEach(b=>b.onclick=()=>{S.screen="community";S.socView="publicTrip";S.socTripId=b.dataset.openPub;S.forkSel={days:{},stops:{}};S.shareToken=null;render();});
   document.querySelectorAll("[data-open-profile]").forEach(b=>b.onclick=()=>{S.screen="community";S.socView="profile";S.socProfileId=b.dataset.openProfile;render();});
   document.querySelectorAll("[data-follow]").forEach(b=>b.onclick=()=>{const a=C();if(!a)return;const id=b.dataset.follow;if(a.isFollowing(id))a.unfollow(id);else a.follow(id);render();});
   document.querySelectorAll("[data-dm]").forEach(b=>b.onclick=()=>{const a=C();if(!a)return;const other=b.dataset.dm;if(other===a.me().id)return;S.dmOtherId=other;S.dmThreadId=a.openThreadWith(other);S.screen="community";S.socView="dm";S.communityTab="messages";render();});
@@ -2200,6 +2424,24 @@ function bind(){
   document.getElementById("cmtSend")?.addEventListener("click",()=>{
     const a=C();if(!a||!S.socTripId)return;const text=(document.getElementById("cmtText")?.value||"").trim();
     if(!text){toast("Write a comment");return;}a.addComment(S.socTripId,text);render();toast("Comment posted");
+  });
+  document.getElementById("socBackShare")?.addEventListener("click",()=>{S.socView=null;S.shareToken=null;S.socTripId=null;S.screen="home";if(location.hash)history.replaceState(null,"",location.pathname+location.search);render();});
+  document.getElementById("socBackShare2")?.addEventListener("click",()=>{document.getElementById("socBackShare")?.click();});
+  document.querySelectorAll("[data-fork-day]").forEach(inp=>inp.onchange=()=>{S.forkSel=S.forkSel||{days:{},stops:{}};S.forkSel.days[inp.dataset.forkDay]=inp.checked;});
+  document.querySelectorAll("[data-fork-stop]").forEach(inp=>inp.onchange=()=>{S.forkSel=S.forkSel||{days:{},stops:{}};S.forkSel.stops[inp.dataset.forkStop]=inp.checked;});
+  document.getElementById("btnForkTrip")?.addEventListener("click",()=>forkIntoDraft(S.forkSource));
+  document.getElementById("cfSave")?.addEventListener("click",()=>{
+    const a=C();if(!a||!a.setCloseFriends)return;
+    const ids=[...document.querySelectorAll("[data-cf]:checked")].map(x=>x.dataset.cf);
+    a.setCloseFriends(ids);toast("Close friends updated");render();
+  });
+  document.querySelectorAll(".audience-opt").forEach(lab=>{
+    lab.addEventListener("click",()=>{
+      const inp=lab.querySelector('input[type="radio"]');
+      if(!inp)return;
+      document.querySelectorAll(".audience-opt").forEach(x=>x.classList.remove("on"));
+      lab.classList.add("on");
+    });
   });
   document.getElementById("dmSend")?.addEventListener("click",()=>{
     const a=C();if(!a||!S.dmThreadId)return;const text=(document.getElementById("dmText")?.value||"").trim();
@@ -2255,7 +2497,19 @@ if("serviceWorker" in navigator&&location.protocol.startsWith("http")){
   navigator.serviceWorker.register("./sw.js").catch(()=>{});
   navigator.serviceWorker.addEventListener("controllerchange",()=>{if(hadController)location.reload();});
 }
-load();render();
+function applyShareHash(){
+  const tok=parseShareHash();
+  if(!tok)return false;
+  S.screen="community";S.socView="shareTrip";S.shareToken=tok;S.forkSel={days:{},stops:{}};
+  return true;
+}
+load();
+applyShareHash();
+render();
+window.addEventListener("hashchange",()=>{
+  if(applyShareHash())render();
+  else if(S.socView==="shareTrip"){S.socView=null;S.shareToken=null;render();}
+});
 })();
 </script>
 </body>

@@ -1,5 +1,5 @@
-const VER = "v4.1.1-polish";
-const CACHE = "wikilogs-v4.1.1-polish";
+const VER = "v4.2.0-share";
+const CACHE = "wikilogs-v4.2.0-share";
 const SHELL = ["./", "./index.html", "./manifest.json", "./sw.js", "./community.js", "./favicon.svg"];
 
 self.addEventListener("install", (e) => {
