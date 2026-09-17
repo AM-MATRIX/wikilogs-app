@@ -699,7 +699,7 @@ function tabStory(t){
   <div class="field" style="flex:1"><label>End</label><input type="date" id="ovEnd" value="${esc(t.endDate)}"/></div></div>
   <div class="row"><div class="field" style="flex:1"><label>Currency</label><input id="ovCur" value="${esc(t.currency)}"/></div>
   <div class="field" style="flex:1"><label>Budget</label><input type="number" id="ovBud" value="${esc(t.budget||"")}"/></div></div>
-  <div class="field"><label>Story lede</label><textarea id="ovSum">${esc(t.summary)}</textarea></div>
+  <div class="field"><label>Story summary</label><textarea id="ovSum">${esc(t.summary)}</textarea></div>
   <div class="field"><label>Cover image</label><input type="file" id="ovCover" accept="image/*"/></div>
   <div class="field"><label>Trip type</label><select id="ovType">${TRIP_TYPES.map(x=>`<option value="${x.id}" ${t.tripType===x.id?"selected":""}>${x.icon} ${x.label}</option>`).join("")}</select></div>
   <div class="field"><label>Book layout</label><select id="ovLayout">
@@ -1987,7 +1987,7 @@ function bind(){
   });
   document.getElementById("btnMakePublic")?.addEventListener("click",()=>{
     const t=T();if(!t)return;
-    if(!(t.summary||"").trim()&&!confirm("Publish without a story lede?"))return;
+    if(!(t.summary||"").trim()&&!confirm("Publish without a story summary?"))return;
     publishLocalTrip(t);render();toast("Trip is public in Community → Discover");
   });
   document.getElementById("btnMakePrivate")?.addEventListener("click",()=>{
