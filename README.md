@@ -4,8 +4,8 @@
 
 ## Live
 
-- Production: https://camper-trip-logger.netlify.app/
-- Intended domain: https://wikilogs.app/ (DNS not connected yet)
+- Production: https://wikilogs.app/ (GitHub Pages from this repo)
+- Custom domain: `CNAME` → `wikilogs.app`
 
 ## Stack
 
@@ -19,16 +19,24 @@ python3 -m http.server 8080
 
 Then visit http://localhost:8080
 
-Service worker needs http(s). Hard-refresh after pulling so `sw.js` picks up `v4.1.0-social`.
+Service worker needs http(s). Hard-refresh after pulling so `sw.js` picks up `v4.1.1-polish`.
 
 ## Version
 
-**v4.1.0-social** — general travel reframe + community/social on top of fluency v4.
+**v4.1.1-polish** — mobile fluency, quieter demo community, GitHub Pages cleanup.
 
 - Storage key remains `wikilogs_v3` (migrates `waybook_v3` / `waybook_v2`).
 - Social demo store: `wikilogs_social_v1`.
-- Cache name: `wikilogs-v4.1.0-social` (network-first shell; drops older caches on activate).
-- Shell assets: `index.html`, `manifest.json`, `sw.js`, `community.js`.
+- Cache name: `wikilogs-v4.1.1-polish` (network-first shell; drops older caches on activate).
+- Shell assets: `index.html`, `manifest.json`, `sw.js`, `community.js`, `favicon.svg`.
+
+### Polish (v4.1.1)
+
+- Bottom dock / FAB respect `safe-area-inset`; larger tap targets; less floating double-chrome on phones.
+- Quick Capture sheets are full-width on narrow screens with sticky actions.
+- Tighter Journal Memory Cards; inviting empty states.
+- Dismissible demo-community chip (persists in `localStorage`).
+- SVG favicon; Netlify HUD / deploy-meta removed (GitHub Pages compatible, relative assets).
 
 ### Fluency (v4) — preserved
 
@@ -59,7 +67,7 @@ Primary **Community** dock tab:
 
 On owned trips (Story tab): **Make trip public** / **Make private** with clear Public / Private badges. Default is **private**.
 
-Demo disclaimer chip: *Demo community — connect Supabase for live multi-user*.
+Demo disclaimer: a quiet dismissible banner — *Demo community — live multi-user needs Supabase*.
 
 ### Offline
 
@@ -152,8 +160,7 @@ create table messages (
   from_id text references profiles(id),
   to_id text references profiles(id),
   text text,
-  read boolean default false,
-  created_at timestamptz default now()
+  read boolean default false
 );
 ```
 
@@ -161,4 +168,4 @@ Enable RLS appropriate for anon/authenticated use. The shipped Supabase adapter 
 
 ## Deploy
 
-Publish this folder to Netlify (site id historically `2646e67e-90aa-4438-9ab5-f8582f337968`).
+Push to `master`. GitHub Pages serves this folder (`.nojekyll`, relative asset paths, `CNAME` for wikilogs.app).
