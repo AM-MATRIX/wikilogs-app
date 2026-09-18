@@ -19,16 +19,23 @@ python3 -m http.server 8080
 
 Then visit http://localhost:8080
 
-Service worker needs http(s). Hard-refresh after pulling so `sw.js` picks up `v4.1.1-polish`.
+Service worker needs http(s). Hard-refresh after pulling so `sw.js` picks up `v4.2.0-share`.
 
 ## Version
 
-**v4.1.1-polish** — mobile fluency, quieter demo community, GitHub Pages cleanup.
+**v4.2.0-share** — Share Circle audience ladder, private share links, and Fork into draft trips.
 
 - Storage key remains `wikilogs_v3` (migrates `waybook_v3` / `waybook_v2`).
-- Social demo store: `wikilogs_social_v1`.
-- Cache name: `wikilogs-v4.1.1-polish` (network-first shell; drops older caches on activate).
+- Social demo store: `wikilogs_social_v1` (now includes `shareLinks` + `closeFriendIds`).
+- Cache name: `wikilogs-v4.2.0-share` (network-first shell; drops older caches on activate).
 - Shell assets: `index.html`, `manifest.json`, `sw.js`, `community.js`, `favicon.svg`.
+
+### Share Circle + Fork (v4.2.0)
+
+- **Audience ladder** per trip: Private (default) → Close friends → Followers → Public (Discover). Missing `audience` migrates from legacy `isPublic` (else Private).
+- **Close friends** list on Community → Me (demo-local). Close-friends trips appear under Discover → “Shared with you”, not full Discover.
+- **Private share link** (`#share=<token>`): view + comment/react without publishing to Discover. Copy / regenerate / revoke. Tokens live in the demo social store; wire to Supabase later.
+- **Fork / Add to my draft trip** on shared-link and public trip views: multi-select days and/or stops → deep-ish copy into a new private draft (media placeholders OK).
 
 ### Polish (v4.1.1)
 
@@ -65,7 +72,7 @@ Primary **Community** dock tab:
 4. **People / Profile** — display name, bio, home base; follow / unfollow; following list.
 5. **Messages** — inbox + thread DMs (demo-local).
 
-On owned trips (Story tab): **Make trip public** / **Make private** with clear Public / Private badges. Default is **private**.
+On owned trips (Story tab): **Share Circle** audience control + badges (Private / Close friends / Followers / Public). Default is **private**. Optional private share link; Fork from Community trip views.
 
 Demo disclaimer: a quiet dismissible banner — *Demo community — live multi-user needs Supabase*.
 
@@ -161,6 +168,17 @@ create table messages (
   to_id text references profiles(id),
   text text,
   read boolean default false
+);
+
+-- share_links (private share tokens — demo stores these in wikilogs_social_v1 today)
+create table share_links (
+  token text primary key,
+  owner_id text references profiles(id),
+  local_trip_id text,
+  audience text,
+  payload jsonb default '{}',
+  revoked boolean default false,
+  created_at timestamptz default now()
 );
 ```
 
